@@ -1,6 +1,7 @@
 ﻿# Vacation Mode – Google Sheets + Calendar
 
 Script desenvolvido para automatizar a gestão de férias no Google Sheets, incluindo contadores automáticos e sincronização direta com o Google Calendar. Suporta vários anos em paralelo.
+
 Baseado no Calendário em Excel com Feriados disponível em https://economiafinancas.com/.
 
 ## O que faz
