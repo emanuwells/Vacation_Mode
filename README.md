@@ -1,25 +1,25 @@
-# Vacation Mode ? Google Sheets + Calendar
+﻿# Vacation Mode – Google Sheets + Calendar
 
-Script em Google Apps Script para transformar um calend?rio pintado no Google Sheets em contagem autom?tica de f?rias/anivers?rio e eventos no Google Calendar. Suporta v?rios anos ao mesmo tempo.
+Script em Google Apps Script para transformar um calendário pintado no Google Sheets em contagem automática de férias/aniversário e eventos no Google Calendar. Suporta vários anos ao mesmo tempo.
 
 ## O que faz
-- Conta dias de f?rias gozados/planeados e o dia de anivers?rio (cores configur?veis).
-- Cria eventos no Google Calendar sem duplicados, agrupando dias consecutivos num ?nico evento.
-- Multi-ano: percorre todas as folhas cujo nome contenha `Calendario YYYY` ou `Calend?rio YYYY`.
-- Menu no Sheets com a??es r?pidas (Sincronizar Tudo, triggers, diagn?stico de cores).
-- Trigger opcional de 5 minutos para sincroniza??o autom?tica.
+- 📆 Conta dias de férias gozados/planeados e o dia de aniversário (cores configuráveis).
+- 🗓️ Cria eventos no Google Calendar sem duplicados, agrupando dias consecutivos num único evento.
+- 🔁 Multi-ano: percorre todas as folhas cujo nome contenha `Calendario YYYY` ou `Calendário YYYY`.
+- 🧭 Menu no Sheets com ações rápidas (Sincronizar Tudo, triggers, diagnóstico de cores).
+- ⏱️ Trigger opcional de 5 minutos para sincronização automática.
 
-## Instala??o
-1. No Google Sheets: Extens?es ? Apps Script.
-2. Apague o c?digo existente e cole o conte?do de `Vacation_Mode.js`.
-3. Guarde e volte ao Sheet (F5). O menu ?Gest?o de F?rias? aparece.
+## Instalação
+1. No Google Sheets: Extensões → Apps Script.
+2. Apague o código existente e cole o conteúdo de `Vacation_Mode.js`.
+3. Guarde e volte ao Sheet (F5). O menu “Gestão de Férias” aparece.
 
 ### Configurar `CONFIG` (topo do ficheiro)
-- `CALENDAR_RANGE`: intervalo do calend?rio (padr?o `G5:AI16`).
-- `CORES`: cores usadas para f?rias e anivers?rio.
-- `CELULAS`: c?lulas onde est?o os contadores (ajuste se a legenda estiver noutro s?tio).
-- `CALENDARIO.NOME`: deixe vazio para usar o calend?rio principal ou defina o nome exato de um calend?rio que possua.
-- `CALENDARIO.TITULO_EVENTO`: t?tulo base dos eventos (ex.: "F?rias").
+- `CALENDAR_RANGE`: intervalo do calendário (padrão `G5:AI16`).
+- `CORES`: cores usadas para férias e aniversário.
+- `CELULAS`: células onde estão os contadores (ajuste se a legenda estiver noutro sítio).
+- `CALENDARIO.NOME`: deixe vazio para usar o calendário principal ou defina o nome exato de um calendário que possua.
+- `CALENDARIO.TITULO_EVENTO`: título base dos eventos (ex.: "Férias").
 
 ### Estrutura das folhas
 - Crie/renomeie folhas como `Calendario 2025`, `Calendario 2026`, etc. (com ou sem acento).
@@ -27,23 +27,23 @@ Script em Google Apps Script para transformar um calend?rio pintado no Google Sh
 
 ## Como usar
 ### Manual (recomendado)
-1. Pinte os dias de f?rias/anivers?rio na(s) folha(s).
-2. Menu ?Gest?o de F?rias? ? ?SINCRONIZAR TUDO?.
-3. Contadores e eventos de todas as folhas de calend?rio s?o atualizados.
+1. Pinte os dias de férias/aniversário na(s) folha(s).
+2. Menu “Gestão de Férias” → “SINCRONIZAR TUDO”.
+3. Contadores e eventos de todas as folhas de calendário são atualizados.
 
-### Autom?tico (opcional)
-1. Menu ?Gest?o de F?rias? ? ?Ativar Sincroniza??o Autom?tica (5 min)?.
+### Automático (opcional)
+1. Menu “Gestão de Férias” → “Ativar Sincronização Automática (5 min)”.
 2. O script corre a cada 5 minutos: conta, sincroniza e escreve no Calendar.
 
-## Dicas e resolu??o de problemas
-- Sem eventos criados: confirme que as cores usadas batem com `CONFIG.CORES`. Use ?Testar Dete??o de Cores? no menu.
-- Eventos a desaparecer: o script s? limpa eventos depois de encontrar c?lulas pintadas; garanta nomes `Calendario YYYY` e range/cores corretos.
-- Calend?rio alvo: deixe `CALENDARIO.NOME` vazio para usar o principal ou indique um calend?rio que seja seu (owned).
+## Dicas e resolução de problemas
+- Sem eventos criados: confirme que as cores usadas batem com `CONFIG.CORES`. Use “Testar Deteção de Cores” no menu.
+- Eventos a desaparecer: o script só limpa eventos depois de encontrar células pintadas; garanta nomes `Calendario YYYY` e range/cores corretos.
+- Calendário alvo: deixe `CALENDARIO.NOME` vazio para usar o principal ou indique um calendário que seja seu (owned).
 
 ## Desenvolvimento
 - Ficheiro principal: `Vacation_Mode.js`.
-- Vers?o: 1.3.2.
+- Versão: 1.3.2.
 - Changelog: `CHANGELOG.md`.
 
-## Licen?a
-MIT. Atribui??o apreciada: Emanuel Ferreira (@emanuwells).
+## Licença
+MIT. Atribuição apreciada: Emanuel Ferreira (@emanuwells).
