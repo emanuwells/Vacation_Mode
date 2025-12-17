@@ -1,52 +1,49 @@
-# Sistema de Gestão de Férias para Google Sheets
+# Vacation Mode ? Google Sheets + Calendar
 
-Script desenvolvido por **Emanuel Ferreira** (@emanuwells) para automatizar a gestão de férias no Google Sheets, incluindo contadores automáticos e sincronização bidirecional com o Google Calendar.
+Script em Google Apps Script para transformar um calend?rio pintado no Google Sheets em contagem autom?tica de f?rias/anivers?rio e eventos no Google Calendar. Suporta v?rios anos ao mesmo tempo.
 
-## 🚀 Funcionalidades
+## O que faz
+- Conta dias de f?rias gozados/planeados e o dia de anivers?rio (cores configur?veis).
+- Cria eventos no Google Calendar sem duplicados, agrupando dias consecutivos num ?nico evento.
+- Multi-ano: percorre todas as folhas cujo nome contenha `Calendario YYYY` ou `Calend?rio YYYY`.
+- Menu no Sheets com a??es r?pidas (Sincronizar Tudo, triggers, diagn?stico de cores).
+- Trigger opcional de 5 minutos para sincroniza??o autom?tica.
 
-- **Contagem Automática**: Calcula dias de férias gozados e planeados baseado na cor das células.
-- **Sincronização com Calendar**: Cria eventos no Google Calendar para os dias marcados, evitando duplicados.
-- **Deteção de Aniversário**: Identifica e gere o dia de aniversário da empresa (célula verde).
-- **Agrupamento Inteligente**: Dias consecutivos são agrupados num único evento no calendário (ex: "Férias (5 dias)").
-- **Automação**:
-    - Atualização instantânea ao editar valores.
-    - Sincronização automática a cada 5 minutos (opcional).
+## Instala??o
+1. No Google Sheets: Extens?es ? Apps Script.
+2. Apague o c?digo existente e cole o conte?do de `Vacation_Mode.js`.
+3. Guarde e volte ao Sheet (F5). O menu ?Gest?o de F?rias? aparece.
 
-## 🛠️ Configuração
+### Configurar `CONFIG` (topo do ficheiro)
+- `CALENDAR_RANGE`: intervalo do calend?rio (padr?o `G5:AI16`).
+- `CORES`: cores usadas para f?rias e anivers?rio.
+- `CELULAS`: c?lulas onde est?o os contadores (ajuste se a legenda estiver noutro s?tio).
+- `CALENDARIO.NOME`: deixe vazio para usar o calend?rio principal ou defina o nome exato de um calend?rio que possua.
+- `CALENDARIO.TITULO_EVENTO`: t?tulo base dos eventos (ex.: "F?rias").
 
-1. **Abra o seu Google Sheet de Férias**.
-2. **Extensions > Apps Script**: Cole o código do ficheiro `Vacation_Mode.js`.
-3. **Ajuste as Configurações** (no início do ficheiro):
-    ```javascript
-    const CONFIG = {
-      CALENDAR_RANGE: 'G5:AI16', // Área onde pinta os dias
-      CORES: {
-        FERIAS_ATUAL: '#d9d2e9', // Cor das férias
-        ANIVERSARIO: '#d9ead3'   // Cor do aniversário
-      },
-      // ... outras configurações
-    };
-    ```
-4. **Execute `configurarSheet`**: Selecione esta função e execute-a uma vez para criar a legenda e os contadores automaticamente.
+### Estrutura das folhas
+- Crie/renomeie folhas como `Calendario 2025`, `Calendario 2026`, etc. (com ou sem acento).
+- Use a mesma grelha em cada folha; basta duplicar a folha para o ano seguinte e pintar.
 
-## 🎨 Cores Padrão
+## Como usar
+### Manual (recomendado)
+1. Pinte os dias de f?rias/anivers?rio na(s) folha(s).
+2. Menu ?Gest?o de F?rias? ? ?SINCRONIZAR TUDO?.
+3. Contadores e eventos de todas as folhas de calend?rio s?o atualizados.
 
-- **Roxo (#d9d2e9)**: Férias planeadas/gozadas.
-- **Verde (#d9ead3)**: Dia de aniversário.
-- **Amarelo (#fff2cc)**: Férias transitadas do ano anterior.
+### Autom?tico (opcional)
+1. Menu ?Gest?o de F?rias? ? ?Ativar Sincroniza??o Autom?tica (5 min)?.
+2. O script corre a cada 5 minutos: conta, sincroniza e escreve no Calendar.
 
-## 📋 Menu Personalizado
+## Dicas e resolu??o de problemas
+- Sem eventos criados: confirme que as cores usadas batem com `CONFIG.CORES`. Use ?Testar Dete??o de Cores? no menu.
+- Eventos a desaparecer: o script s? limpa eventos depois de encontrar c?lulas pintadas; garanta nomes `Calendario YYYY` e range/cores corretos.
+- Calend?rio alvo: deixe `CALENDARIO.NOME` vazio para usar o principal ou indique um calend?rio que seja seu (owned).
 
-O script cria um menu **"🏖️ Gestão de Férias"** no seu Sheet com as opções:
-- **Sincronizar Tudo**: Atualiza contadores e envia para o Calendar.
-- **Ativar Automação**: Liga os triggers automáticos.
-- **Diagnóstico**: Ferramentas para verificar se as cores estão a ser detetadas corretamente.
+## Desenvolvimento
+- Ficheiro principal: `Vacation_Mode.js`.
+- Vers?o: 1.3.2.
+- Changelog: `CHANGELOG.md`.
 
-
-## 📄 Licença
-
-Este projeto é de uso livre. Atribuição ao autor original é apreciada.
-
-## 🔗 Créditos e Referências
-
-O template Excel base utilizado neste projeto foi adaptado a partir do **Calendário Excel com Feriados – Portugal** disponível em [economiafinancas.com](https://economiafinancas.com/2025/), com personalizações e alterações para integração com este script.
+## Licen?a
+MIT. Atribui??o apreciada: Emanuel Ferreira (@emanuwells).
