@@ -1,75 +1,45 @@
-﻿# 🏖️ Vacation Mode — Google Sheets + Calendar
+﻿# Changelog
 
-Este script transforma o teu planeamento de férias no **Google Sheets** (feito através de células pintadas) em contagens automáticas e eventos sincronizados no **Google Calendar**. Suporta múltiplos anos e automatização total via triggers.
+## [1.3.2] - 2025-12-17
+### Adicionado
+- ? Placeholders/documenta??o para replica??o f?cil (configura??o e uso num ?nico README).
+- ?? Descri??es de eventos no Calendar com acentua??o e formata??o limpas.
+- ?? Refer?ncia ao calend?rio base em Excel com Feriados de https://economiafinancas.com/.
 
----
+### Alterado
+- ?? `Vacation_Mode.js` preparado para multi-ano e valores gen?ricos por defeito (calend?rio principal).
+- ??? `docs/guia_rapido.md` removido; README ampliado com instru??es completas.
 
-## ✨ Funcionalidades Principais
+## [1.3.1] - 2025-12-17
+### Adicionado
+- ?? Suporte multi-folha/multi-ano documentado (folhas `Calendario YYYY`).
+- ?? README reescrito e guia r?pido em `docs/guia_rapido.md` para replica??o simples.
 
-* 📅 **Gestão de Datas:** Conta automaticamente dias de férias (gozados/planeados) e aniversários.
-* 🗓️ **Sincronização Inteligente:** Cria eventos no Google Calendar sem duplicados, agrupando dias consecutivos (ex: 5 dias de férias = 1 evento longo).
-* 🔄 **Suporte Multi-Ano:** Deteta e processa todas as folhas que sigam o padrão `Calendario YYYY` ou `Calendário YYYY`.
-* 🧭 **Interface Nativa:** Adiciona um menu personalizado ao Google Sheets para ações rápidas.
-* ⏱️ **Automação:** Opção para ativar uma sincronização automática a cada 5 minutos.
+### Alterado
+- ?? Cabe?alho do script atualizado para 1.3.1.
+- ?? Manual_Instrucoes.md removido; informa??o consolidada no README.
 
----
+## [1.3.0] - 2025-12-16
+### Adicionado
+- ?? Genericidade: o script foi refatorado para ser utiliz?vel por qualquer pessoa.
+- ?? Configura??o Din?mica: o ano ? agora detetado automaticamente.
+- ?? Dete??o de URL: o link para o Sheet nos eventos do calend?rio ? gerado automaticamente.
+- ??? Tratamento de Erros: melhoria nas mensagens quando o calend?rio n?o ? encontrado.
 
-## 🚀 Instalação Rápida
+### Alterado
+- ?? Autor atualizado para Emanuel Ferreira (@emanuwells).
+- ?? Limpeza: remo??o de emails e nomes hardcoded do c?digo fonte.
 
-1. No teu Google Sheets, vai a **Extensões** → **Apps Script**.
-2. Apaga qualquer código existente no editor.
-3. Copia e cola o conteúdo do ficheiro `Vacation_Mode.js`.
-4. Guarda o projeto (`Ctrl+S`) e faz **Refresh (F5)** na folha de cálculo.
-5. O menu **"🌴 Gestão de Férias"** aparecerá na barra superior.
+## [1.2.2] - 2025-11-24
+### Alterado
+- ? Corre??o na l?gica de contagem de dias passados vs futuros.
+- ?? Ajuste nas cores de dete??o para incluir variantes de roxo.
 
----
+## [1.2.0] - 2025-11-01
+### Adicionado
+- ?? Agrupamento de dias consecutivos no Calendar.
+- ??? Menu personalizado com op??es de diagn?stico.
 
-## ⚙️ Configuração do Script
-
-No topo do ficheiro `Vacation_Mode.js`, encontrarás o objeto `CONFIG`. Ajusta os valores conforme a tua estrutura:
-
-| Variável | Descrição | Valor Padrão |
-| :--- | :--- | :--- |
-| `CALENDAR_RANGE` | Intervalo da grelha do calendário. | `'G5:AI16'` |
-| `CORES` | Códigos hexadecimais para Férias e Aniversário. | *(Configurável)* |
-| `CELULAS` | Onde o script deve escrever os resultados/contadores. | *(Ajustar à legenda)* |
-| `CALENDARIO.NOME` | Nome do calendário (vazio = Calendário Principal). | `''` |
-| `TITULO_EVENTO` | Prefixo do nome do evento no calendário. | `'Férias'` |
-
-### 📂 Estrutura das Folhas
-Para que o script funcione, nomeia as tuas abas como:
-* `Calendario 2025`
-* `Calendário 2026`
-* *(Dica: Podes simplesmente duplicar a folha de um ano para o outro.)*
-
----
-
-## 🕹️ Como Utilizar
-
-### Modo Manual (Recomendado)
-1. Pinta os dias de férias ou aniversário na grelha do Sheets com as cores definidas.
-2. Vai ao menu **🌴 Gestão de Férias** → **🔄 SINCRONIZAR TUDO**.
-3. O script atualizará os contadores na folha e criará/removerá os eventos no Calendar.
-
-### Modo Automático
-1. No menu, seleciona **Ativar Sincronização Automática**.
-2. O script criará um *trigger* que corre de 5 em 5 minutos para manter tudo atualizado sem intervenção manual.
-
----
-
-## 💡 Dicas e Resolução de Problemas
-
-> **Dica sobre Cores:**
-> Cada monitor ou tema pode alterar ligeiramente a perceção da cor. Se o script não detetar as tuas marcações, usa a opção **"Diagnóstico: Testar Deteção de Cores"** no menu para confirmar o código hexadecimal exato que o Google Sheets está a ler.
-
-* **Eventos não aparecem:** Verifica se o `CALENDAR_RANGE` cobre todos os dias do mês na tua folha.
-* **Permissões:** Na primeira execução, o Google pedirá autorização para aceder ao Sheets e ao Calendar. É um processo seguro e necessário.
-* **Calendário Alvo:** Se usares um calendário partilhado, garante que tens permissões de edição e que o nome em `CALENDARIO.NOME` é exatamente igual ao que vês no Google Calendar.
-
----
-
-## 🛠️ Desenvolvimento e Licença
-
-* **Versão Atual:** 1.3.2
-* **Autor:** Emanuel Ferreira (@emanuwells)
-* **Licença:** MIT (Atribuição apreciada)
+## [1.0.0] - 2025-01-01
+### Adicionado
+- ?? Vers?o inicial do sistema de gest?o de f?rias.

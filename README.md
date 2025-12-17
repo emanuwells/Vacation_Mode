@@ -1,6 +1,7 @@
 ﻿# Vacation Mode – Google Sheets + Calendar
 
-Script em Google Apps Script para transformar um calendário pintado no Google Sheets em contagem automática de férias/aniversário e eventos no Google Calendar. Suporta vários anos ao mesmo tempo.
+Script desenvolvido para automatizar a gestão de férias no Google Sheets, incluindo contadores automáticos e sincronização direta com o Google Calendar. Suporta vários anos em paralelo.
+Baseado no Calendário em Excel com Feriados disponível em https://economiafinancas.com/.
 
 ## O que faz
 - 📆 Conta dias de férias gozados/planeados e o dia de aniversário (cores configuráveis).
