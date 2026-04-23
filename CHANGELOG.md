@@ -1,5 +1,9 @@
 ﻿# Changelog
 
+## [1.3.3] - 2026-04-23
+### Corrigido
+- Alargado `CALENDAR_RANGE` de `G5:AI16` para `B5:AO16` para cobrir toda a largura visual do calendário e contabilizar dias pintados nas colunas finais.
+
 ## [1.3.2] - 2025-12-17
 ### Adicionado
 - ? Placeholders/documenta??o para replica??o f?cil (configura??o e uso num ?nico README).
