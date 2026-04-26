@@ -1,7 +1,7 @@
 /**
  * SISTEMA DE GESTAO DE FERIAS
- * Versao: 1.3.2
- * Data: 2025-12-17
+ * Versao: 1.3.3
+ * Data: 2026-04-26
  * 
  * Autor: Emanuel Ferreira (@emanuwells)
  * 
