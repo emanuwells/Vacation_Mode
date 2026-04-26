@@ -44,7 +44,7 @@ Baseado no Calendário em Excel com Feriados disponível em https://economiafina
 
 ## Desenvolvimento
 - Ficheiro principal: `Vacation_Mode.js`.
-- Versão: 1.3.2.
+- Versão: 1.3.3.
 - Changelog: `CHANGELOG.md`.
 
 ## Licença

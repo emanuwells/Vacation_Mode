@@ -1,7 +1,7 @@
 /**
  * SISTEMA DE GESTAO DE FERIAS
- * Versao: 1.3.2
- * Data: 2025-12-17
+ * Versao: 1.3.3
+ * Data: 2026-04-26
  * 
  * Autor: Emanuel Ferreira (@emanuwells)
  * 
@@ -22,7 +22,7 @@
 const CONFIG = {
   // Range do calendário (12 linhas = meses, 31 colunas = dias)
   // Ajusta aqui se mudares a posição do quadro; no teu layout o topo do calendário começa em G5 e o dia 31 cai em AI16.
-  CALENDAR_RANGE: 'G5:AI16',
+  CALENDAR_RANGE: 'C5:AM16',
 
   // Cores a detetar (hexadecimal - Google Sheets format)
   CORES: {
@@ -143,33 +143,64 @@ function obterDataHoje() {
   return hoje;
 }
 
+function normalizarCor(cor) {
+  return String(cor || '').toLowerCase().replace(/\s/g, '');
+}
+
+function isCorFerias(cor) {
+  const corNormalizada = normalizarCor(cor);
+  return [
+    CONFIG.CORES.FERIAS_ATUAL,
+    CONFIG.CORES.FERIAS_ATUAL_ALT,
+    CONFIG.CORES.FERIAS_ANTERIOR
+  ].some(corConfigurada => corNormalizada === corConfigurada.toLowerCase());
+}
+
+function isCorAniversario(cor) {
+  return normalizarCor(cor) === CONFIG.CORES.ANIVERSARIO.toLowerCase();
+}
+
+function extrairDiaDaCelula(valor) {
+  if (valor instanceof Date && !isNaN(valor.getTime())) {
+    return valor.getDate();
+  }
+
+  if (typeof valor === 'number' && isFinite(valor)) {
+    return Math.trunc(valor);
+  }
+
+  const match = String(valor || '').trim().match(/^(\d{1,2})$/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+function obterDataDaCelula(valor, indiceLinha, ano) {
+  const dia = extrairDiaDaCelula(valor);
+  if (!dia) {
+    return null;
+  }
+
+  const mes = indiceLinha; // 0=Janeiro, 1=Fevereiro, ..., 11=Dezembro
+  const data = new Date(ano, mes, dia);
+
+  if (data.getFullYear() !== ano || data.getMonth() !== mes || data.getDate() !== dia) {
+    return null;
+  }
+
+  data.setHours(0, 0, 0, 0);
+  return data;
+}
+
 /**
  * Processa uma célula individual e atualiza os contadores
  */
 function processarCelula(valor, cor, indiceLinha, hoje, contadores, ano) {
-  // Ignorar c?lulas vazias ou com texto (S, D, T, Q)
-  if (!valor || isNaN(valor)) {
+  // Ignorar celulas vazias, texto de dias da semana e datas invalidas.
+  const data = obterDataDaCelula(valor, indiceLinha, ano);
+  if (!data) {
     return;
   }
 
-  // Construir a data completa (ano derivado da folha), m?s baseado no ?ndice da linha, dia = valor da c?lula
-  const mes = indiceLinha; // 0=Janeiro, 1=Fevereiro, ..., 11=Dezembro
-  const dia = parseInt(valor);
-  const data = new Date(ano, mes, dia);
-
-  // Normalizar cor (min?sculas, sem espa?os)
-  const corNormalizada = cor.toLowerCase().replace(/\s/g, '');
-
-  // Verificar se ? c?lula de f?rias (aceita cor do ano corrente ou do ano anterior)
-  const corFeriasAtual = CONFIG.CORES.FERIAS_ATUAL.toLowerCase();
-  const corFeriasAtualAlt = CONFIG.CORES.FERIAS_ATUAL_ALT.toLowerCase();
-  const corFeriasAnterior = CONFIG.CORES.FERIAS_ANTERIOR.toLowerCase();
-  const isFerias =
-    corNormalizada === corFeriasAtual ||
-    corNormalizada === corFeriasAtualAlt ||
-    corNormalizada === corFeriasAnterior;
-
-  if (isFerias) {
+  if (isCorFerias(cor)) {
     if (data <= hoje) {
       contadores.feriasGozadas++;
     } else {
@@ -178,7 +209,7 @@ function processarCelula(valor, cor, indiceLinha, hoje, contadores, ano) {
   }
 
   // Verificar se ? c?lula de anivers?rio (verde)
-  if (corNormalizada === CONFIG.CORES.ANIVERSARIO.toLowerCase()) {
+  if (isCorAniversario(cor)) {
     if (data <= hoje) {
       contadores.aniversarioGozado = 1; // M?ximo 1 dia
     } else {
@@ -367,28 +398,12 @@ function obterDatasFerias(sheet, ano) {
       const valor = valores[linha][coluna];
       const cor = cores[linha][coluna];
 
-      // Ignorar c?lulas vazias ou com texto
-      if (!valor || isNaN(valor)) {
+      const data = obterDataDaCelula(valor, linha, ano);
+      if (!data) {
         continue;
       }
 
-      // Normalizar cor
-      const corNormalizada = cor.toLowerCase().replace(/\s/g, '');
-
-      // Verificar se ? c?lula de f?rias (roxo)
-      const corFeriasAtual = CONFIG.CORES.FERIAS_ATUAL.toLowerCase();
-      const corFeriasAtualAlt = CONFIG.CORES.FERIAS_ATUAL_ALT.toLowerCase();
-      const corFeriasAnterior = CONFIG.CORES.FERIAS_ANTERIOR.toLowerCase();
-      const isFerias =
-        corNormalizada === corFeriasAtual ||
-        corNormalizada === corFeriasAtualAlt ||
-        corNormalizada === corFeriasAnterior;
-
-      if (isFerias) {
-        const mes = linha; // 0=Janeiro, 1=Fevereiro, ..., 11=Dezembro
-        const dia = parseInt(valor);
-        const data = new Date(ano, mes, dia);
-
+      if (isCorFerias(cor)) {
         datas.push(data);
         Logger.log('Encontrada: ' + formatarData(data) + ' (linha ' + (startRow + linha) + ', coluna ' + (startCol + coluna) + ')');
       }
@@ -551,12 +566,14 @@ function instalarTrigger() {
 }
 
 /**
- * Instala trigger de tempo para sincronização automática a cada 5 minutos
+ * Instala triggers para sincronização automática:
+ * - a cada 5 minutos
+ * - quando há alterações de formatação/cor no ficheiro
  * Atualiza contadores E sincroniza com Calendar automaticamente
  */
 function instalarTriggerAutomatico() {
   try {
-    // Remover triggers de tempo existentes
+    // Remover triggers automáticos existentes
     removerTriggersAutomaticos();
 
     // Criar trigger que executa a cada 5 minutos
@@ -565,9 +582,14 @@ function instalarTriggerAutomatico() {
       .everyMinutes(5)
       .create();
 
-    Logger.log('✅ Trigger automático (5 min) instalado');
+    ScriptApp.newTrigger('sincronizarTudo')
+      .forSpreadsheet(SpreadsheetApp.getActiveSpreadsheet())
+      .onChange()
+      .create();
+
+    Logger.log('✅ Triggers automáticos instalados (5 min + alterações de cor)');
     mostrarNotificacao(
-      'Sincronização automática ativada! Atualiza a cada 5 minutos.',
+      'Sincronização automática ativada! Atualiza ao pintar e a cada 5 minutos.',
       'Automação Total Ativa',
       5
     );
@@ -650,7 +672,7 @@ function onOpen() {
     .addItem('📅 Sincronizar com Calendar', 'sincronizarComCalendar')
     .addSeparator()
     .addItem('⚙️ Ativar Atualização ao Editar', 'instalarTrigger')
-    .addItem('🤖 Ativar Sincronização Automática (5 min)', 'instalarTriggerAutomatico')
+    .addItem('🤖 Ativar Sincronização Automática', 'instalarTriggerAutomatico')
     .addSeparator()
     .addItem('❌ Desativar Atualização ao Editar', 'removerTrigger')
     .addItem('⛔ Desativar Sincronização Automática', 'removerTriggerAutomatico')
@@ -675,8 +697,8 @@ function mostrarAjuda() {
     '- Usa sempre que pintares celulas de ferias',
     '',
     'SINCRONIZACAO AUTOMATICA',
-    '- Menu: "Ativar Sincronizacao Automatica (5 min)"',
-    '- Atualiza tudo automaticamente a cada 5 minutos',
+    '- Menu: "Ativar Sincronizacao Automatica"',
+    '- Atualiza ao pintar celulas e tambem a cada 5 minutos',
     '- Pinta celulas e esquece - o sistema faz o resto',
     '',
     'CONTADORES MANUAIS',
@@ -851,7 +873,7 @@ function testarDetecaoCores() {
 
   if (!encontrouFerias) {
     Logger.log('  ✗ Nenhuma célula roxa de férias encontrada!');
-    Logger.log('    → Verifica se usaste a cor: ' + CONFIG.CORES.FERIAS);
+    Logger.log('    → Verifica se usaste a cor: ' + CONFIG.CORES.FERIAS_ATUAL);
   }
 
   if (!encontrouAniversario) {
