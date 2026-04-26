@@ -1,51 +1,51 @@
-﻿# Changelog
+# Changelog
 
 ## [1.3.3] - 2026-04-26
 ### Corrigido
-- Sincronizacao automatica passa a instalar tambem um trigger `onChange`, para apanhar alteracoes de formatacao/cor quando se pintam dias no Google Sheets.
-- Detecao de dias pintados agora aceita numeros, texto numerico e celulas com datas reais formatadas como dia.
-- Diagnostico de cores deixou de referir a chave inexistente `CONFIG.CORES.FERIAS`.
+- A sincronização automática passa a instalar também um trigger `onChange`, para apanhar alterações de formatação/cor quando se pintam dias no Google Sheets.
+- A deteção de dias pintados passa a aceitar números, texto numérico e células com datas reais formatadas como dia.
+- O diagnóstico de cores deixou de referir a chave inexistente `CONFIG.CORES.FERIAS`.
 
 ## [1.3.2] - 2025-12-17
 ### Adicionado
-- ? Placeholders/documenta??o para replica??o f?cil (configura??o e uso num ?nico README).
-- ?? Descri??es de eventos no Calendar com acentua??o e formata??o limpas.
-- ?? Refer?ncia ao calend?rio base em Excel com Feriados de https://economiafinancas.com/.
+- Placeholders e documentação para replicação fácil, com configuração e uso consolidados no README.
+- Descrições de eventos no Calendar com acentuação e formatação limpas.
+- Referência ao calendário base em Excel com Feriados, de https://economiafinancas.com/.
 
 ### Alterado
-- ?? `Vacation_Mode.js` preparado para multi-ano e valores gen?ricos por defeito (calend?rio principal).
-- ??? `docs/guia_rapido.md` removido; README ampliado com instru??es completas.
+- `Vacation_Mode.js` preparado para multi-ano e valores genéricos por defeito, usando o calendário principal.
+- `docs/guia_rapido.md` removido; README ampliado com instruções completas.
 
 ## [1.3.1] - 2025-12-17
 ### Adicionado
-- ?? Suporte multi-folha/multi-ano documentado (folhas `Calendario YYYY`).
-- ?? README reescrito e guia r?pido em `docs/guia_rapido.md` para replica??o simples.
+- Suporte multi-folha e multi-ano documentado, para folhas `Calendario YYYY`.
+- README reescrito e guia rápido em `docs/guia_rapido.md`, para replicação simples.
 
 ### Alterado
-- ?? Cabe?alho do script atualizado para 1.3.1.
-- ?? Manual_Instrucoes.md removido; informa??o consolidada no README.
+- Cabeçalho do script atualizado para 1.3.1.
+- `Manual_Instrucoes.md` removido; informação consolidada no README.
 
 ## [1.3.0] - 2025-12-16
 ### Adicionado
-- ?? Genericidade: o script foi refatorado para ser utiliz?vel por qualquer pessoa.
-- ?? Configura??o Din?mica: o ano ? agora detetado automaticamente.
-- ?? Dete??o de URL: o link para o Sheet nos eventos do calend?rio ? gerado automaticamente.
-- ??? Tratamento de Erros: melhoria nas mensagens quando o calend?rio n?o ? encontrado.
+- Genericidade: o script foi refatorado para poder ser utilizado por qualquer pessoa.
+- Configuração dinâmica: o ano é agora detetado automaticamente.
+- Deteção de URL: o link para o Sheet nos eventos do calendário é gerado automaticamente.
+- Tratamento de erros: melhoria nas mensagens quando o calendário não é encontrado.
 
 ### Alterado
-- ?? Autor atualizado para Emanuel Ferreira (@emanuwells).
-- ?? Limpeza: remo??o de emails e nomes hardcoded do c?digo fonte.
+- Autor atualizado para Emanuel Ferreira (@emanuwells).
+- Limpeza: remoção de emails e nomes hardcoded do código-fonte.
 
 ## [1.2.2] - 2025-11-24
 ### Alterado
-- ? Corre??o na l?gica de contagem de dias passados vs futuros.
-- ?? Ajuste nas cores de dete??o para incluir variantes de roxo.
+- Correção na lógica de contagem de dias passados e futuros.
+- Ajuste nas cores de deteção, para incluir variantes de roxo.
 
 ## [1.2.0] - 2025-11-01
 ### Adicionado
-- ?? Agrupamento de dias consecutivos no Calendar.
-- ??? Menu personalizado com op??es de diagn?stico.
+- Agrupamento de dias consecutivos no Calendar.
+- Menu personalizado com opções de diagnóstico.
 
 ## [1.0.0] - 2025-01-01
 ### Adicionado
-- ?? Vers?o inicial do sistema de gest?o de f?rias.
+- Versão inicial do sistema de gestão de férias.
