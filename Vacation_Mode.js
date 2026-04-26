@@ -22,7 +22,7 @@
 const CONFIG = {
   // Range do calendário (12 linhas = meses, 31 colunas = dias)
   // Ajusta aqui se mudares a posição do quadro; no teu layout o topo do calendário começa em G5 e o dia 31 cai em AI16.
-  CALENDAR_RANGE: 'G5:AI16',
+  CALENDAR_RANGE: 'C5:AM16',
 
   // Cores a detetar (hexadecimal - Google Sheets format)
   CORES: {
