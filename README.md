@@ -17,7 +17,7 @@ Baseado no Calendário em Excel com Feriados disponível em https://economiafina
 3. Guarde e volte ao Sheet (F5). O menu “Gestão de Férias” aparece.
 
 ### Configurar `CONFIG` (topo do ficheiro)
-- `CALENDAR_RANGE`: intervalo do calendário (padrão `G5:AI16`).
+- `CALENDAR_RANGE`: intervalo do calendário (padrão `B5:AO16`).
 - `CORES`: cores usadas para férias e aniversário.
 - `CELULAS`: células onde estão os contadores (ajuste se a legenda estiver noutro sítio).
 - `CALENDARIO.NOME`: deixe vazio para usar o calendário principal ou defina o nome exato de um calendário que possua.
