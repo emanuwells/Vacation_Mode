@@ -12,7 +12,8 @@ Para regras específicas do projeto atual, ler também `PROJECT_CONTEXT.md`.
 4. `CHANGELOG.md` — histórico versionado das alterações.
 5. `tasks/lessons.md` — lições aprendidas e erros a evitar.
 6. `tasks/todo.md` — plano atual e estado da execução.
-7. Documentação técnica do projeto, quando existir.
+7. `README.md` — documentação principal para humanos.
+8. Documentação técnica do projeto, quando existir.
 
 ## Ordem De Prioridade Em Caso De Conflito
 
@@ -130,6 +131,100 @@ Antes de concluir qualquer tarefa que altere documentação ou comentários, a I
 
 Não entregar trabalho como concluído se a documentação ou comentários estiverem em português incorreto, sem acentos ou inconsistentes com o código.
 
+## README Obrigatório
+
+Cada projeto deve ter um `README.md` profissional, claro, completo e visualmente apelativo.
+
+O `README.md` é a documentação principal para humanos. Deve permitir que uma pessoa ou equipa compreenda rapidamente o objetivo do projeto, como o executar, como o configurar, como o testar, como o manter e como contribuir sem depender de explicações externas.
+
+Se o `README.md` não existir, a IA deve criá-lo antes de concluir qualquer alteração não trivial.
+
+Se o `README.md` existir mas estiver incompleto, desatualizado, confuso, pouco profissional ou visualmente pobre, a IA deve melhorá-lo na mesma tarefa em que alterar o projeto.
+
+## Qualidade Obrigatória Do `README.md`
+
+O `README.md` deve seguir padrões profissionais equivalentes aos melhores repositórios públicos e internos.
+
+Deve ser:
+
+- claro;
+- bem estruturado;
+- visualmente limpo;
+- tecnicamente rigoroso;
+- fácil de percorrer;
+- escrito em português europeu correto, com acentuação;
+- atualizado com o estado real do projeto;
+- útil para instalação, execução, manutenção e onboarding.
+
+## Estrutura Recomendada Do `README.md`
+
+Sempre que aplicável, o `README.md` deve incluir:
+
+- título do projeto;
+- descrição curta e objetiva;
+- badges úteis, se fizerem sentido;
+- índice, se o documento for longo;
+- visão geral;
+- funcionalidades principais;
+- stack tecnológica;
+- requisitos;
+- instalação;
+- configuração;
+- variáveis de ambiente;
+- comandos principais;
+- utilização com exemplos;
+- estrutura do projeto;
+- arquitetura técnica;
+- fluxos importantes;
+- testes;
+- qualidade, linting ou formatação;
+- troubleshooting;
+- segurança e gestão de segredos;
+- roadmap ou pendências relevantes;
+- contribuição, quando aplicável;
+- licença;
+- referência ao `CHANGELOG.md`.
+
+## Regras Para Criar Ou Atualizar O `README.md`
+
+- Não inventar funcionalidades, comandos, endpoints, dependências ou decisões técnicas.
+- Validar comandos no repositório sempre que possível.
+- Separar factos confirmados de informação marcada como `A confirmar`.
+- Refletir a estrutura real do projeto.
+- Manter exemplos simples e executáveis.
+- Atualizar instruções quando forem alterados scripts, Docker, variáveis de ambiente, migrations, endpoints ou fluxos principais.
+- Remover instruções obsoletas.
+- Usar tabelas quando melhorarem a leitura.
+- Usar blocos de código com linguagem indicada.
+- Evitar texto genérico sem utilidade prática.
+- Garantir que o `README.md` não contradiz `PROJECT_CONTEXT.md`, `CHANGELOG.md`, `CHANGELOG_POLICY.md` ou o código.
+
+## Apresentação Visual Do `README.md`
+
+O `README.md` deve ser visualmente apelativo sem sacrificar rigor técnico.
+
+Boas práticas:
+
+- usar títulos e subtítulos claros;
+- usar listas curtas e objetivas;
+- usar tabelas para comandos, variáveis de ambiente e endpoints;
+- usar blocos de código formatados;
+- incluir diagramas Mermaid quando ajudarem a explicar arquitetura ou fluxos;
+- destacar avisos importantes com secções como `Nota`, `Atenção` ou `Importante`;
+- evitar parágrafos longos;
+- manter consistência de termos e formatação.
+
+## Critério De Conclusão Para Documentação
+
+Uma tarefa que altere comportamento, instalação, configuração, comandos, arquitetura, endpoints, scripts, migrations ou fluxos críticos só pode ser considerada concluída se:
+
+- `README.md` estiver criado ou atualizado;
+- `PROJECT_CONTEXT.md` estiver coerente com o projeto;
+- `CHANGELOG.md` tiver entrada versionada quando aplicável;
+- os comentários e documentação técnica estiverem em português europeu correto;
+- a documentação não contradisser o código;
+- a resposta final indicar claramente se o `README.md` foi atualizado ou se não foi necessário.
+
 ## Changelog Obrigatório
 
 Cada projeto deve ter um `CHANGELOG.md` versionado na raiz.
@@ -205,3 +300,4 @@ Regras mínimas:
 - **Sem Preguiça**: encontrar causas raiz. Sem correções temporárias. Padrões de programador sénior.
 - **Impacto Mínimo**: as alterações devem tocar apenas no que é necessário. Evitar introduzir bugs.
 - **Documentação Clara**: todo o código relevante deve estar documentado em português europeu correto, com acentuação e sem ambiguidade.
+- **README Profissional**: todo o projeto deve ter um `README.md` claro, útil, atualizado e visualmente apelativo, ao nível dos melhores repositórios.
