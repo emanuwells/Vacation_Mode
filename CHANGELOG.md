@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.4] - 2026-05-16
+### Adicionado
+- `PROJECT_CONTEXT.md` com contexto técnico confirmado do projeto, configuração operacional, fluxos críticos, política de segredos e critérios de verificação.
+- `CHANGELOG_POLICY.md` com regras SemVer e formato mínimo para entradas futuras.
+- `tasks/todo.md` e `tasks/lessons.md` para cumprir o fluxo de trabalho definido em `AGENTS.md`.
+
+### Alterado
+- `README.md` reescrito como documentação principal profissional, com visão geral, requisitos, instalação, configuração, utilização, menus, arquitetura, validação, troubleshooting, segurança e manutenção.
+
+### Validação
+- Conteúdo cruzado com `Vacation_Mode.js`, `AGENTS.md`, `.gitignore` e histórico existente do `CHANGELOG.md`.
+- Revisão manual de coerência, acentuação e português europeu na documentação alterada.
+
 ## [1.3.3] - 2026-04-26
 ### Corrigido
 - A sincronização automática passa a instalar também um trigger `onChange`, para apanhar alterações de formatação/cor quando se pintam dias no Google Sheets.
