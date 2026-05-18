@@ -161,8 +161,8 @@ Deve ser:
 Sempre que aplicável, o `README.md` deve incluir:
 
 - título do projeto;
+- badges visuais úteis no topo, quando houver stack, licença, versão ou estado confirmados;
 - descrição curta e objetiva;
-- badges úteis, se fizerem sentido;
 - índice, se o documento for longo;
 - visão geral;
 - funcionalidades principais;
@@ -214,11 +214,194 @@ Boas práticas:
 - evitar parágrafos longos;
 - manter consistência de termos e formatação.
 
+## Badges Obrigatórios No `README.md`
+
+Sempre que fizer sentido, o `README.md` deve incluir badges visuais no topo do ficheiro, logo abaixo do título e antes da descrição principal.
+
+Os badges devem resumir rapidamente:
+
+- stack principal do projeto;
+- framework ou runtime;
+- base de dados;
+- estado do projeto, se aplicável;
+- licença;
+- versão, se aplicável;
+- estado dos testes ou CI/CD, se existir.
+
+Exemplo esperado:
+
+```md
+![Stack](https://img.shields.io/badge/stack-React%20%7C%20Vite%20%7C%20PHP%20%7C%20Postgres-29b6f6)
+![License](https://img.shields.io/badge/license-MIT-2ecc71)
+```
+
+Exemplo no topo de um `README.md`:
+
+```md
+# WELLS_OS
+
+![Stack](https://img.shields.io/badge/stack-React%20%7C%20Vite%20%7C%20PHP%20%7C%20Postgres-29b6f6)
+![License](https://img.shields.io/badge/license-MIT-2ecc71)
+
+Portfolio e painel operacional do Emanuel Wells.
+```
+
+Os badges devem ser criados com base na stack real do projeto.
+
+A IA não deve inventar tecnologias, licença, versão, estado de testes, cobertura, build ou CI/CD.
+
+Se a licença ainda não estiver definida, usar:
+
+```md
+![License](https://img.shields.io/badge/license-A%20confirmar-lightgrey)
+```
+
+Se o projeto ainda estiver em desenvolvimento inicial, pode ser usado:
+
+```md
+![Status](https://img.shields.io/badge/status-em%20desenvolvimento-f39c12)
+```
+
+## Regras Para Badges No `README.md`
+
+- Usar badges apenas quando acrescentarem leitura rápida ao `README.md`.
+- Colocar os badges no topo do documento.
+- Manter nomes curtos, claros e legíveis.
+- Usar apenas tecnologias confirmadas no projeto.
+- Não usar badges falsos de build, testes, cobertura, versão ou CI/CD sem validação real.
+- Preferir badges simples, limpos e consistentes.
+- Garantir que os badges não substituem a documentação textual.
+- Atualizar os badges quando a stack, licença, estado ou versão do projeto mudarem.
+
+## Dockerização Quando Fizer Sentido
+
+Sempre que fizer sentido para o projeto, a IA deve propor ou implementar uma configuração Docker simples, segura e profissional.
+
+Docker deve ser considerado especialmente quando o projeto tiver:
+
+- backend ou API;
+- base de dados;
+- workers, filas ou serviços auxiliares;
+- dependências difíceis de instalar manualmente;
+- necessidade de ambiente reprodutível;
+- deploy em VPS, Coolify, Portainer, CI/CD ou ambiente semelhante;
+- diferença relevante entre ambiente local e produção.
+
+A Dockerização deve ser simples e adequada à escala do projeto.
+
+Não criar Docker, Docker Compose ou infraestrutura adicional se isso apenas aumentar complexidade sem benefício claro.
+
+## Regras Para Docker
+
+Quando Docker for usado, devem existir, sempre que aplicável:
+
+- `Dockerfile` claro e minimalista;
+- `docker-compose.yml` para ambiente local;
+- `.dockerignore`;
+- `.env.example`;
+- instruções no `README.md`;
+- documentação das portas, volumes e variáveis de ambiente;
+- comandos de arranque, paragem, rebuild e logs;
+- separação clara entre ambiente local, desenvolvimento e produção quando aplicável.
+
+A IA não deve colocar segredos reais em imagens, ficheiros Docker, `docker-compose.yml`, `.env.example`, documentação ou repositório.
+
+## Estrutura Simples E Profissional Do Repositório
+
+A IA deve manter a estrutura do repositório simples, previsível e profissional.
+
+A estrutura deve favorecer:
+
+- leitura rápida;
+- separação clara de responsabilidades;
+- onboarding fácil;
+- manutenção futura;
+- compatibilidade com Docker, CI/CD e deploy;
+- facilidade para outras IAs entenderem o projeto.
+
+Evitar:
+
+- pastas sem propósito claro;
+- nomes vagos como `coisas`, `misc`, `old`, `teste_final`, `novo2`;
+- duplicação desnecessária;
+- ficheiros soltos sem organização;
+- estruturas demasiado complexas para projetos simples;
+- refactors grandes sem necessidade.
+
+## Estrutura Recomendada Do Repositório
+
+A estrutura deve ser adaptada ao projeto, mas seguir um padrão simples quando aplicável.
+
+Para projetos simples:
+
+```text
+projeto/
+├── AGENTS.md
+├── PROJECT_CONTEXT.md
+├── README.md
+├── CHANGELOG.md
+├── CHANGELOG_POLICY.md
+├── .env.example
+├── .gitignore
+├── .dockerignore
+├── docker-compose.yml
+│
+├── tasks/
+│   ├── todo.md
+│   └── lessons.md
+│
+├── docs/
+│   └── ...
+│
+├── src/
+│   └── ...
+│
+├── tests/
+│   └── ...
+│
+└── scripts/
+    └── ...
+```
+
+Para projetos full-stack:
+
+```text
+projeto/
+├── backend/
+├── frontend/
+├── database/
+├── docs/
+├── scripts/
+├── tests/
+├── tasks/
+├── docker-compose.yml
+├── .env.example
+├── README.md
+├── PROJECT_CONTEXT.md
+├── CHANGELOG.md
+├── CHANGELOG_POLICY.md
+└── AGENTS.md
+```
+
+## Critério De Simplicidade Estrutural
+
+Antes de criar novas pastas, serviços, containers ou abstrações, a IA deve perguntar:
+
+- isto reduz complexidade ou aumenta?
+- isto ajuda no deploy, testes ou manutenção?
+- isto é adequado à escala atual do projeto?
+- uma pessoa nova conseguiria perceber a estrutura em menos de 5 minutos?
+
+Se a resposta for negativa, manter a solução mais simples.
+
 ## Critério De Conclusão Para Documentação
 
 Uma tarefa que altere comportamento, instalação, configuração, comandos, arquitetura, endpoints, scripts, migrations ou fluxos críticos só pode ser considerada concluída se:
 
 - `README.md` estiver criado ou atualizado;
+- a estrutura do repositório estiver simples, coerente e profissional;
+- Docker estiver documentado no `README.md` quando for usado;
+- badges do `README.md` estiverem corretos quando usados;
 - `PROJECT_CONTEXT.md` estiver coerente com o projeto;
 - `CHANGELOG.md` tiver entrada versionada quando aplicável;
 - os comentários e documentação técnica estiverem em português europeu correto;
@@ -301,3 +484,6 @@ Regras mínimas:
 - **Impacto Mínimo**: as alterações devem tocar apenas no que é necessário. Evitar introduzir bugs.
 - **Documentação Clara**: todo o código relevante deve estar documentado em português europeu correto, com acentuação e sem ambiguidade.
 - **README Profissional**: todo o projeto deve ter um `README.md` claro, útil, atualizado e visualmente apelativo, ao nível dos melhores repositórios.
+- **Docker Adequado**: Docker deve ser usado quando trouxer reprodutibilidade, facilidade de deploy ou isolamento útil, sem criar complexidade desnecessária.
+- **Estrutura Profissional**: o repositório deve manter uma organização simples, previsível, limpa e fácil de compreender.
+- **Badges Reais**: os badges do `README.md` devem refletir apenas informação confirmada sobre stack, licença, versão, estado, testes ou CI/CD.

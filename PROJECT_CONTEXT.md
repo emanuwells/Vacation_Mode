@@ -53,6 +53,8 @@ O objeto `CONFIG`, no topo de `Vacation_Mode.js`, concentra a configuração ope
 - `sincronizarComCalendar()` cria eventos no Google Calendar, agrupando datas consecutivas.
 - `instalarTriggerAutomatico()` instala trigger temporal de 5 minutos e trigger `onChange`.
 - `testarDetecaoCores()` ajuda a diagnosticar cores reconhecidas pelo script.
+- `configurarSheet()` cria a legenda e as células de contadores numa folha nova.
+- `atualizarCoresAutomaticamente()` sugere cores encontradas na grelha, mas não altera o `CONFIG` automaticamente.
 
 ## Comandos Principais
 
@@ -80,10 +82,10 @@ O repositório não deve conter credenciais, tokens, ficheiros `.clasp.json` nem
 - A configuração fica centralizada no objeto `CONFIG`.
 - A deteção multi-ano depende de folhas cujo nome contenha `Calendario YYYY` ou `Calendário YYYY`.
 - Os eventos do Calendar são identificados pelo título configurado e pelo marcador `[FERIAS_AUTO]`.
+- A distribuição continua a ser manual, sem dependências locais, Docker ou processo de build confirmado.
 
 ## Riscos E Pendências
 
 - A execução real depende de permissões do Google Apps Script e do Google Calendar.
 - Não existe teste automatizado local confirmado.
-- Algumas mensagens internas do script ainda usam texto sem acentuação por compatibilidade visual ou legado; qualquer alteração deve ser validada no Apps Script.
-
+- Alterações em mensagens internas devem ser validadas no Apps Script, porque o ambiente de execução real é externo ao repositório.

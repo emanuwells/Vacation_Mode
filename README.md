@@ -1,5 +1,10 @@
 # Vacation Mode
 
+![Stack](https://img.shields.io/badge/stack-Google%20Apps%20Script%20%7C%20Google%20Sheets%20%7C%20Google%20Calendar-4285f4)
+![Runtime](https://img.shields.io/badge/runtime-Google%20Apps%20Script-34a853)
+![Version](https://img.shields.io/badge/version-1.3.5-f39c12)
+![License](https://img.shields.io/badge/license-MIT-2ecc71)
+
 Automatização de férias para Google Sheets, com contadores anuais e sincronização direta com o Google Calendar.
 
 > **Nota:** este projeto é distribuído como um único ficheiro Google Apps Script (`Vacation_Mode.js`) para ser copiado para o editor do Apps Script associado ao Google Sheets.
@@ -15,6 +20,7 @@ Automatização de férias para Google Sheets, com contadores anuais e sincroniz
 - [Utilização](#utilização)
 - [Estrutura Esperada Da Folha](#estrutura-esperada-da-folha)
 - [Comandos E Menus](#comandos-e-menus)
+- [Funções De Manutenção](#funções-de-manutenção)
 - [Arquitetura Técnica](#arquitetura-técnica)
 - [Testes E Validação](#testes-e-validação)
 - [Troubleshooting](#troubleshooting)
@@ -100,6 +106,8 @@ Altere este valor se a grelha anual do seu Google Sheets estiver noutro local.
 
 Use o menu `Testar Deteção de Cores` se os contadores não reconhecerem os dias pintados.
 
+Se a folha usar cores diferentes, execute `atualizarCoresAutomaticamente()` no editor do Apps Script para obter sugestões no log. Esta função não altera o código sozinha; serve apenas para indicar quais as cores mais usadas na grelha.
+
 ### Células Dos Contadores
 
 | Chave | Célula | Descrição |
@@ -181,6 +189,16 @@ Não existem comandos locais obrigatórios. A operação diária é feita pelo m
 | `Testar Deteção de Cores` | `testarDetecaoCores` | Regista e mostra diagnóstico das cores reconhecidas. |
 | `Ajuda` | `mostrarAjuda` | Mostra instruções rápidas dentro do Google Sheets. |
 
+## Funções De Manutenção
+
+Estas funções existem no script, mas são pensadas para uso pontual a partir do editor do Apps Script.
+
+| Função | Quando usar | Efeito |
+| --- | --- | --- |
+| `configurarSheet()` | Ao preparar uma folha nova que ainda não tem legenda nem células de contadores. | Cria a legenda em `B18:C28`, aplica cores de referência e executa uma atualização inicial dos contadores. |
+| `testarDetecaoCores()` | Quando os dias pintados não estão a ser reconhecidos. | Regista no log as cores encontradas em células numéricas da grelha e mostra uma notificação resumida. |
+| `atualizarCoresAutomaticamente()` | Quando é necessário descobrir que cores foram mais usadas na grelha. | Sugere no log possíveis valores para as cores de férias e aniversário; a alteração do `CONFIG` continua a ser manual. |
+
 ## Arquitetura Técnica
 
 ```mermaid
@@ -202,7 +220,7 @@ flowchart LR
 | Contadores | `atualizarContadores`, `processarCelula`, `atualizarCelulasContadores` |
 | Calendar | `sincronizarComCalendar`, `obterCalendario`, `limparEventosAntigos`, `agruparDatasConsecutivas` |
 | Triggers | `instalarTrigger`, `instalarTriggerAutomatico`, `removerTrigger`, `removerTriggerAutomatico` |
-| Diagnóstico | `testarDetecaoCores`, `mostrarAjuda` |
+| Diagnóstico e manutenção | `testarDetecaoCores`, `atualizarCoresAutomaticamente`, `configurarSheet`, `mostrarAjuda` |
 
 ## Testes E Validação
 
