@@ -84,6 +84,7 @@ Não manter adaptadores ativos na raiz por defeito. Ativar apenas quando necess�
 - Não alterar comportamento funcional sem explicar impacto.
 - Não introduzir dependências sem justificar necessidade, risco e alternativa.
 - Não versionar segredos reais.
+- Não adicionar trailers `Co-authored-by: Cursor <cursoragent@cursor.com>` nem commits em nome de agentes IA; o repositório deve refletir apenas o autor humano.
 - Não declarar testes, lint, build, deploy ou validações que não foram executados.
 - Não concluir trabalho não trivial sem atualizar `tasks/todo.md`.
 - Atualizar `tasks/lessons.md` quando houver aprendizagem reutilizável.

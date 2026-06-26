@@ -18,6 +18,8 @@ Estrutura mínima deste repositório, alinhada com o template de repositório.
 ├── PROJECT_CONTEXT.md
 ├── README.md
 ├── tasks/
+├── tools/
+│   └── ai-adapters/
 ├── Vacation_Mode.js
 └── VERSION
 ```

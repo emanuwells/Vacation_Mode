@@ -1,5 +1,15 @@
 # TODO
 
+## 2026-06-26T16:00:00+01:00 — v1.4.3 Raiz limpa e sem cursoragent
+
+**Estado:** concluído
+**Risco:** baixo
+**Objetivo:** remover `.cursor/` e `.githooks/` da raiz; prevenir `cursoragent` nos contributors; alinhar Git com remoto.
+**Alterações:**
+- Removidos `.cursor/`, `.githooks/`, `scripts/install-git-hooks.ps1`.
+- `tools/ai-adapters/cursor/.cursor/cli.json`, `AGENTS.md`, `COMMANDS.md`.
+**Validação:** estrutura conforme template; histórico sem Co-authored-by Cursor.
+
 ## 2026-06-26T15:00:00+01:00 — v1.4.2 Dias úteis no título e fins de semana no Calendar
 
 **Estado:** concluído

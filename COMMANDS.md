@@ -18,13 +18,12 @@ git diff
 git diff --check
 ```
 
-### Hooks (evitar cursoragent nos commits)
+### Commits sem cursoragent
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/install-git-hooks.ps1
-```
-
-Instala `core.hooksPath=.githooks` no repositório local. O hook `prepare-commit-msg` remove trailers `Co-authored-by: Cursor <cursoragent@cursor.com>`.
+- Nunca adicionar `Co-authored-by: Cursor <cursoragent@cursor.com>` nem commits em nome de agentes IA.
+- No Cursor: **Settings → Agents → Attribution** — desativar Commit Attribution e PR Attribution.
+- Com adaptador Cursor ativo, `tools/ai-adapters/cursor/.cursor/cli.json` mantém `commitAttribution` e `prAttribution` a `false`.
+- Para limpar histórico existente: `scripts/strip-coauthor-msg.ps1` com `git filter-branch --msg-filter` (ver documentação Git).
 
 ## Instalação e execução
 

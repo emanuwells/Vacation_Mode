@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.4.3] - 2026-06-26T16:00:00+01:00
+
+### Alinhamento com estrutura do template (raiz limpa)
+
+**Motivo:**
+- `.cursor/` e `.githooks/` na raiz violam a política de raiz limpa do template; a prevenção de `cursoragent` deve viver em `tools/ai-adapters/`.
+
+**Impacto:**
+- Raiz sem pastas de adaptador ativo; configuração Cursor opcional em `tools/ai-adapters/cursor/`.
+- Regra explícita em `AGENTS.md` e `COMMANDS.md` contra co-author de agentes IA.
+
+**Alterações:**
+- Removidos `.cursor/`, `.githooks/` e `scripts/install-git-hooks.ps1` da raiz.
+- `tools/ai-adapters/cursor/.cursor/cli.json`: attribution desativada no adaptador.
+- `AGENTS.md`, `COMMANDS.md`, `docs/ROOT_STRUCTURE.md`: documentação atualizada.
+- `VERSION`: atualizado para `1.4.3`.
+
+**Validação:**
+- Estrutura alinhada com `docs/ROOT_STRUCTURE.md`.
+- Histórico Git sem trailers `cursoragent@cursor.com`.
+
+---
+
 ## [1.4.2] - 2026-06-26T15:00:00+01:00
 
 ### Título com dias úteis e fins de semana contíguos no Calendar
