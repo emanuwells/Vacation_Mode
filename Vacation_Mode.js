@@ -414,18 +414,18 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
     let eventosAdicionados = 0;
     blocos.forEach((bloco, index) => {
       try {
-        const dataInicio = bloco.inicio;
-        const dataFim = new Date(bloco.fim);
-        dataFim.setDate(dataFim.getDate() + 1); // A Calendar API precisa do dia seguinte para eventos de dia inteiro.
+        const intervalo = estenderIntervaloComFinsDeSemanaContiguos(bloco.inicio, bloco.fim);
+        const dataInicio = intervalo.inicio;
+        const dataFimApi = new Date(intervalo.fim);
+        dataFimApi.setDate(dataFimApi.getDate() + 1); // A Calendar API precisa do dia seguinte para eventos de dia inteiro.
 
-        const numDias = contarDiasCalendario(bloco.inicio, bloco.fim);
-        const titulo = numDias === 1
+        const diasUteis = bloco.dias.length;
+        const titulo = diasUteis === 1
           ? CONFIG.CALENDARIO.TITULO_EVENTO
-          : CONFIG.CALENDARIO.TITULO_EVENTO + ' (' + numDias + ' dias)';
+          : CONFIG.CALENDARIO.TITULO_EVENTO + ' (' + diasUteis + ' dias)';
 
         // Descrição com emojis, resumo e link da folha para referência.
-        const resumoPeriodo = '📅 Período: ' + formatarData(dataInicio) + ' a ' + formatarData(bloco.fim) +
-          ' (' + numDias + ' dias)';
+        const resumoPeriodo = '📅 ' + diasUteis + ' dias úteis · ' + formatarData(dataInicio) + ' a ' + formatarData(intervalo.fim);
         const resumoRestantes = '📉 Restantes: ' + feriasRestantes + ' dias';
         const linkSheet = '🔗 Sheet: ' + SpreadsheetApp.getActiveSpreadsheet().getUrl();
         const descricaoEvento = [
@@ -435,7 +435,7 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
           CONFIG.CALENDARIO.MARCADOR
         ].join('\n');
         // Remover qualquer evento existente no mesmo período antes de criar, reforçando a proteção contra duplicados.
-        const duplicados = calendario.getEvents(dataInicio, dataFim);
+        const duplicados = calendario.getEvents(dataInicio, dataFimApi);
         duplicados.forEach(evento => {
           const tituloExistente = evento.getTitle();
           const descExistente = evento.getDescription() || '';
@@ -448,10 +448,11 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
           }
         });
 
-        calendario.createAllDayEvent(titulo, dataInicio, dataFim, { description: descricaoEvento });
+        calendario.createAllDayEvent(titulo, dataInicio, dataFimApi, { description: descricaoEvento });
         eventosAdicionados++;
 
-        Logger.log('Bloco ' + (index + 1) + ': ' + formatarData(dataInicio) + ' a ' + formatarData(bloco.fim) + ' (' + numDias + ' dia(s))');
+        Logger.log('Bloco ' + (index + 1) + ': ' + formatarData(dataInicio) + ' a ' + formatarData(intervalo.fim) +
+          ' (' + diasUteis + ' dia(s) úteis, ' + contarDiasCalendario(dataInicio, intervalo.fim) + ' de calendário)');
 
       } catch (erroEvento) {
         Logger.log('Erro ao criar evento: ' + erroEvento.message);
@@ -544,6 +545,26 @@ function intervaloApenasFinsDeSemana(dataInicio, dataFim) {
 function contarDiasCalendario(inicio, fim) {
   const diferenca = Math.round((fim - inicio) / (1000 * 60 * 60 * 24));
   return diferenca + 1;
+}
+
+/**
+ * Alarga o intervalo do evento para incluir fins de semana contíguos nas extremidades.
+ * Segunda-feira no início inclui o sábado e domingo anteriores; sexta-feira no fim inclui o fim de semana seguinte.
+ */
+function estenderIntervaloComFinsDeSemanaContiguos(inicio, fim) {
+  const inicioExt = new Date(inicio);
+  inicioExt.setHours(0, 0, 0, 0);
+  const fimExt = new Date(fim);
+  fimExt.setHours(0, 0, 0, 0);
+
+  if (inicioExt.getDay() === 1) {
+    inicioExt.setDate(inicioExt.getDate() - 2);
+  }
+  if (fimExt.getDay() === 5) {
+    fimExt.setDate(fimExt.getDate() + 2);
+  }
+
+  return { inicio: inicioExt, fim: fimExt };
 }
 
 /**

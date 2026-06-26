@@ -44,7 +44,7 @@ O fluxo principal:
 | Contadores | Cálculo de férias gozadas, planeadas, totais, restantes e dia de aniversário. |
 | Multi-folha | Suporte a várias folhas anuais no mesmo ficheiro. |
 | Google Calendar | Criação de eventos com título configurável e marcador interno. |
-| Agrupamento | Dias úteis seguidos separados apenas por fins de semana são reunidos num único evento, com contagem em dias de calendário. |
+| Agrupamento | Dias úteis seguidos separados apenas por fins de semana são reunidos num único evento; o título conta dias úteis pintados e o evento inclui fins de semana contíguos. |
 | Sincronização ao colorir | Trigger `onChange` reage a alterações de cor e formato na folha. |
 | Automação | Trigger temporal opcional a cada 5 minutos. |
 | Diagnóstico | Função para validar cores reconhecidas na grelha. |

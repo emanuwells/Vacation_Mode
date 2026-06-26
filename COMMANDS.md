@@ -18,6 +18,14 @@ git diff
 git diff --check
 ```
 
+### Hooks (evitar cursoragent nos commits)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install-git-hooks.ps1
+```
+
+Instala `core.hooksPath=.githooks` no repositório local. O hook `prepare-commit-msg` remove trailers `Co-authored-by: Cursor <cursoragent@cursor.com>`.
+
 ## Instalação e execução
 
 Este projeto não tem build local nem dependências npm. A instalação é manual:

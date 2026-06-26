@@ -1,5 +1,17 @@
 # TODO
 
+## 2026-06-26T15:00:00+01:00 — v1.4.2 Dias úteis no título e fins de semana no Calendar
+
+**Estado:** concluído
+**Risco:** médio
+**Objetivo:** título do evento com dias úteis pintados; evento no Calendar inclui fins de semana contíguos; remover cursoragent dos contributors.
+**Alterações:**
+- `Vacation_Mode.js`: `estenderIntervaloComFinsDeSemanaContiguos`, título com `bloco.dias.length`.
+- `README.md`, `CHANGELOG.md`, `VERSION`: documentação e versão 1.4.2.
+- `.githooks/prepare-commit-msg`, `.cursor/cli.json`: prevenção de co-author Cursor.
+**Validação:** `node --check Vacation_Mode.js`; reescrita de histórico Git sem Co-authored-by.
+**Pendente:** colar `Vacation_Mode.js` no Apps Script e correr `SINCRONIZAR TUDO` na folha real.
+
 ## 2026-06-26T12:00:00+01:00 — v1.4.0 Template e sincronização ao colorir
 
 **Estado:** concluído

@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.4.2] - 2026-06-26T15:00:00+01:00
+
+### Título com dias úteis e fins de semana contíguos no Calendar
+
+**Motivo:**
+- Na folha só se pintam dias úteis, mas o evento no Google Calendar deve cobrir fins de semana contíguos; o título deve refletir apenas os dias de férias contabilizados.
+
+**Impacto:**
+- O título passa a mostrar dias úteis pintados (ex.: `Férias (12 dias)`), não o total de dias de calendário.
+- Eventos alargam-se a sábado/domingo adjacentes quando o período começa numa segunda ou termina numa sexta.
+
+**Alterações:**
+- `Vacation_Mode.js`: função `estenderIntervaloComFinsDeSemanaContiguos`; título e descrição com dias úteis.
+- `README.md`: agrupamento documentado com contagem em dias úteis.
+- `.githooks/prepare-commit-msg`, `.cursor/cli.json`: prevenção de co-author Cursor.
+- `VERSION`: atualizado para `1.4.2`.
+
+**Validação:**
+- `node --check Vacation_Mode.js`
+- Revisão lógica: seg–sex (5 úteis, span seg–dom); duas semanas (10 úteis, span com fins de semana).
+
+**Diff:**
+- Título deixa de usar `contarDiasCalendario`; intervalo do evento inclui fins de semana nas extremidades.
+
+---
+
 ## [1.4.1] - 2026-06-26T14:00:00+01:00
 
 ### Agrupamento de férias com fins de semana
