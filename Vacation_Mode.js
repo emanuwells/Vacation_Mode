@@ -1,7 +1,7 @@
 /**
  * SISTEMA DE GESTÃO DE FÉRIAS
- * Versão: 1.3.5
- * Data: 2026-05-18
+ * Versão: 1.4.0
+ * Data: 2026-06-26
  * 
  * Autor: Emanuel Ferreira (@emanuwells)
  * 
@@ -57,6 +57,9 @@ const CONFIG = {
   }
 };
 
+/** Chave usada para ignorar onChange provocado por escrita do próprio script. */
+const CHAVE_SUPRESSAO_ONCHANGE = 'VACATION_MODE_SUPPRESS_ONCHANGE';
+
 /**
  * Deteta o ano da folha pelo nome (ex.: "Calendário 2025", "Calendario 2026").
  * Se não encontrar, devolve o ano padrão configurado.
@@ -68,23 +71,57 @@ function obterAnoDaSheet(sheet) {
 }
 
 /**
- * Devolve as folhas de calendário (nome começando por "Calendario"/"Calendário" e ano YYYY).
+ * Devolve as folhas de calendário anuais encontradas no ficheiro.
+ * Aceita nomes como "Calendário 2026", "Calendário de férias" ou folhas com ano no nome.
  * Se nenhuma for encontrada, devolve apenas a folha ativa como fallback.
  */
 function obterFolhasCalendario() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const todas = ss.getSheets();
 
-  const alvo = todas
+  const comAnoNoNome = todas
     .map(sheet => ({ sheet, ano: obterAnoDaSheet(sheet) }))
-    .filter(({ sheet }) => /Calend.?rio\s*\d{4}/i.test(sheet.getName()));
+    .filter(({ sheet }) => /Calend.?rio/i.test(sheet.getName()) && /20\d{2}/.test(sheet.getName()));
 
-  if (alvo.length === 0) {
-    const ativa = ss.getActiveSheet();
-    return [{ sheet: ativa, ano: obterAnoDaSheet(ativa) }];
+  if (comAnoNoNome.length > 0) {
+    return comAnoNoNome;
   }
 
-  return alvo;
+  const comNomeCalendario = todas
+    .map(sheet => ({ sheet, ano: obterAnoDaSheet(sheet) }))
+    .filter(({ sheet }) => /Calend.?rio|f[eé]rias/i.test(sheet.getName()));
+
+  if (comNomeCalendario.length > 0) {
+    return comNomeCalendario;
+  }
+
+  if (todas.length === 1) {
+    const unica = todas[0];
+    return [{ sheet: unica, ano: obterAnoDaSheet(unica) }];
+  }
+
+  const ativa = ss.getActiveSheet();
+  return [{ sheet: ativa, ano: obterAnoDaSheet(ativa) }];
+}
+
+/**
+ * Executa uma ação sem voltar a disparar sincronização por onChange.
+ */
+function comSupressaoAlteracaoFolha(callback) {
+  const props = PropertiesService.getDocumentProperties();
+  props.setProperty(CHAVE_SUPRESSAO_ONCHANGE, '1');
+  try {
+    return callback();
+  } finally {
+    props.deleteProperty(CHAVE_SUPRESSAO_ONCHANGE);
+  }
+}
+
+/**
+ * Indica se a sincronização automática deve ser ignorada neste momento.
+ */
+function deveIgnorarOnChange() {
+  return PropertiesService.getDocumentProperties().getProperty(CHAVE_SUPRESSAO_ONCHANGE) === '1';
 }
 
 // ============================
@@ -96,7 +133,7 @@ function obterFolhasCalendario() {
  * Atualiza todos os contadores de férias e aniversário.
  * Conta células coloridas e distingue entre datas passadas e futuras.
  */
-function atualizarContadores(e, sheetParam, anoParam) {
+function atualizarContadores(e, sheetParam, anoParam, silencioso) {
   try {
     const sheet = sheetParam || (e && e.range ? e.range.getSheet() : SpreadsheetApp.getActiveSpreadsheet().getActiveSheet());
     const ano = anoParam || obterAnoDaSheet(sheet);
@@ -122,15 +159,21 @@ function atualizarContadores(e, sheetParam, anoParam) {
       }
     }
 
-    // Atualizar células na folha com os novos valores.
-    atualizarCelulasContadores(sheet, contadores);
+    // Atualizar células na folha com os novos valores, sem reentrar no onChange.
+    comSupressaoAlteracaoFolha(function () {
+      atualizarCelulasContadores(sheet, contadores);
+    });
 
-    Logger.log('? Contadores atualizados com sucesso! (' + sheet.getName() + ' - ' + ano + ')');
-    mostrarNotificacao(sheet.getName() + ': Contadores atualizados!', 'Sucesso', 3);
+    Logger.log('Contadores atualizados com sucesso (' + sheet.getName() + ' - ' + ano + ')');
+    if (!silencioso) {
+      mostrarNotificacao(sheet.getName() + ': Contadores atualizados!', 'Sucesso', 3);
+    }
 
   } catch (erro) {
-    Logger.log('? Erro ao atualizar contadores: ' + erro.message);
-    mostrarNotificacao('Erro ao atualizar contadores. Verifica o log.', 'Erro', 5);
+    Logger.log('Erro ao atualizar contadores: ' + erro.message);
+    if (!silencioso) {
+      mostrarNotificacao('Erro ao atualizar contadores. Verifica o log.', 'Erro', 5);
+    }
   }
 }
 
@@ -263,36 +306,61 @@ function atualizarCelulasContadores(sheet, contadores) {
  * Sincroniza tudo: atualiza contadores e sincroniza com o Google Calendar.
  * Função combinada para usar com botão ou trigger automático.
  */
-function sincronizarTudo() {
+function sincronizarTudo(opcoes) {
+  const automatico = opcoes && opcoes.automatico === true;
   try {
     Logger.log('A iniciar sincronização completa...');
 
     const folhas = obterFolhasCalendario();
     if (folhas.length === 0) {
       Logger.log('Nenhuma folha de calendário encontrada.');
-      mostrarNotificacao('Nenhuma folha de calendário encontrada.', 'Aviso', 5);
+      if (!automatico) {
+        mostrarNotificacao('Nenhuma folha de calendário encontrada.', 'Aviso', 5);
+      }
       return;
     }
 
     folhas.forEach(({ sheet, ano }) => {
-      atualizarContadores(null, sheet, ano);
+      atualizarContadores(null, sheet, ano, automatico);
       Utilities.sleep(500);
-      sincronizarComCalendar(sheet, ano);
+      sincronizarComCalendar(sheet, ano, automatico);
     });
 
     Logger.log('Sincronização completa finalizada!');
-    mostrarNotificacao('Contadores e Calendar sincronizados!', 'Sincronização Completa', 5);
+    if (!automatico) {
+      mostrarNotificacao('Contadores e Calendar sincronizados!', 'Sincronização Completa', 5);
+    }
 
   } catch (erro) {
     Logger.log('Erro na sincronização completa: ' + erro.message);
-    mostrarNotificacao('Erro na sincronização. Verifica o log.', 'Erro', 5);
+    if (!automatico) {
+      mostrarNotificacao('Erro na sincronização. Verifica o log.', 'Erro', 5);
+    }
   }
+}
+
+/**
+ * Handler de onChange para sincronizar ao colorir ou editar a grelha anual.
+ * Ignora alterações feitas pelo próprio script e tipos de mudança irrelevantes.
+ */
+function onAlteracaoPlanilha(e) {
+  if (!e || deveIgnorarOnChange()) {
+    return;
+  }
+
+  const tiposRelevantes = { FORMAT: true, EDIT: true };
+  if (!tiposRelevantes[e.changeType]) {
+    return;
+  }
+
+  Logger.log('Alteração detetada (' + e.changeType + '). A sincronizar após colorir/editar...');
+  sincronizarTudo({ automatico: true });
 }
 
 /**
  * Sincroniza uma folha específica com o Calendar (usa o ano detetado na folha).
  */
-function sincronizarComCalendar(sheetParam, anoParam) {
+function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
   let lock;
   try {
     const sheet = sheetParam || SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -301,7 +369,9 @@ function sincronizarComCalendar(sheetParam, anoParam) {
     lock = LockService.getDocumentLock();
     if (!lock.tryLock(30000)) {
       Logger.log('Outra sincronização está a correr. Abortado para evitar duplicados.');
-      mostrarNotificacao('Outra sincronização em curso. Tenta novamente em instantes.', 'Aviso', 4);
+      if (!silencioso) {
+        mostrarNotificacao('Outra sincronização em curso. Tenta novamente em instantes.', 'Aviso', 4);
+      }
       return;
     }
     Logger.log('A iniciar sincronização com Google Calendar para ' + sheet.getName() + ' (' + ano + ')...');
@@ -310,7 +380,9 @@ function sincronizarComCalendar(sheetParam, anoParam) {
     const calendario = obterCalendario();
     if (!calendario) {
       Logger.log('Erro: calendário não encontrado');
-      mostrarNotificacao('Erro ao aceder ao calendário. Verifica as permissões.', 'Erro', 5);
+      if (!silencioso) {
+        mostrarNotificacao('Erro ao aceder ao calendário. Verifica as permissões.', 'Erro', 5);
+      }
       return;
     }
 
@@ -320,8 +392,11 @@ function sincronizarComCalendar(sheetParam, anoParam) {
     const datasFerias = obterDatasFerias(sheet, ano);
     const feriasRestantes = sheet.getRange(CONFIG.CELULAS.FERIAS_RESTANTES).getValue() || 0;
     if (datasFerias.length === 0) {
-      Logger.log('Nenhuma célula roxa de férias encontrada em ' + sheet.getName());
-      mostrarNotificacao(sheet.getName() + ': nenhum dia de férias encontrado para sincronizar.', 'Aviso', 3);
+      limparEventosAntigos(calendario, ano);
+      Logger.log('Nenhuma célula de férias encontrada em ' + sheet.getName() + '; eventos antigos removidos.');
+      if (!silencioso) {
+        mostrarNotificacao(sheet.getName() + ': nenhum dia de férias encontrado; eventos antigos removidos.', 'Aviso', 3);
+      }
       return;
     }
 
@@ -388,12 +463,16 @@ function sincronizarComCalendar(sheetParam, anoParam) {
       : eventosAdicionados + ' períodos de férias adicionados ao Google Calendar!';
 
     Logger.log(eventosAdicionados + ' evento(s) criado(s) com sucesso');
-    mostrarNotificacao(mensagem, 'Sincronização completa', 5);
+    if (!silencioso) {
+      mostrarNotificacao(mensagem, 'Sincronização completa', 5);
+    }
 
   } catch (erro) {
     Logger.log('Erro ao sincronizar com Calendar: ' + erro.message);
     Logger.log('Stack trace: ' + erro.stack);
-    mostrarNotificacao('Erro ao sincronizar. Verifica o log.', 'Erro', 5);
+    if (!silencioso) {
+      mostrarNotificacao('Erro ao sincronizar. Verifica o log.', 'Erro', 5);
+    }
   } finally {
     if (lock) {
       lock.releaseLock();
@@ -500,28 +579,29 @@ function formatarData(data) {
  */
 function obterCalendario() {
   try {
-    // Tentar obter o calendário principal.
     const calendarioPrincipal = CalendarApp.getDefaultCalendar();
+    const nomeConfigurado = String(CONFIG.CALENDARIO.NOME || '').trim();
 
-    // Se o nome corresponder, usar este calendário.
-    if (calendarioPrincipal.getName() === CONFIG.CALENDARIO.NOME) {
+    if (!nomeConfigurado) {
       return calendarioPrincipal;
     }
 
-    // Procurar em todos os calendários próprios.
+    if (calendarioPrincipal.getName() === nomeConfigurado) {
+      return calendarioPrincipal;
+    }
+
     const calendarios = CalendarApp.getAllOwnedCalendars();
-    for (let cal of calendarios) {
-      if (cal.getName() === CONFIG.CALENDARIO.NOME) {
+    for (const cal of calendarios) {
+      if (cal.getName() === nomeConfigurado) {
         return cal;
       }
     }
 
-    // Se não encontrou calendário específico, usar o principal.
-    Logger.log('⚠️ Calendário "' + CONFIG.CALENDARIO.NOME + '" não encontrado. A usar calendário principal.');
+    Logger.log('Calendário "' + nomeConfigurado + '" não encontrado. A usar calendário principal.');
     return calendarioPrincipal;
 
   } catch (erro) {
-    Logger.log('❌ Erro ao obter calendário: ' + erro.message);
+    Logger.log('Erro ao obter calendário: ' + erro.message);
     return null;
   }
 }
@@ -603,12 +683,12 @@ function instalarTriggerAutomatico() {
       .everyMinutes(5)
       .create();
 
-    ScriptApp.newTrigger('sincronizarTudo')
+    ScriptApp.newTrigger('onAlteracaoPlanilha')
       .forSpreadsheet(SpreadsheetApp.getActiveSpreadsheet())
       .onChange()
       .create();
 
-    Logger.log('✅ Triggers automáticos instalados (5 min + alterações de cor)');
+    Logger.log('Triggers automáticos instalados (5 min + alterações de cor/formato)');
     mostrarNotificacao(
       'Sincronização automática ativada! Atualiza ao pintar e a cada 5 minutos.',
       'Automação Total Ativa',
@@ -667,9 +747,10 @@ function removerTriggersExistentes() {
  * Remove todos os triggers automáticos (sincronizarTudo).
  */
 function removerTriggersAutomaticos() {
+  const handlers = { sincronizarTudo: true, onAlteracaoPlanilha: true };
   const triggers = ScriptApp.getProjectTriggers();
   triggers.forEach(trigger => {
-    if (trigger.getHandlerFunction() === 'sincronizarTudo') {
+    if (handlers[trigger.getHandlerFunction()]) {
       ScriptApp.deleteTrigger(trigger);
     }
   });
@@ -776,22 +857,24 @@ function configurarSheet() {
       ['Dia de aniversário restante', 0]
     ];
 
-    // Inserir dados na linha 18, coluna B.
-    sheet.getRange(18, 2, legenda.length, 2).setValues(legenda);
+    comSupressaoAlteracaoFolha(function () {
+      // Inserir dados na linha 18, coluna B.
+      sheet.getRange(18, 2, legenda.length, 2).setValues(legenda);
 
-    // Aplicar formatação às células da legenda.
-    sheet.getRange('B18:B23').setFontWeight('normal');
-    sheet.getRange('B18').setFontWeight('bold'); // Destaque da primeira linha.
-    sheet.getRange('B24').setFontWeight('bold'); // Separador antes do aniversário.
+      // Aplicar formatação às células da legenda.
+      sheet.getRange('B18:B23').setFontWeight('normal');
+      sheet.getRange('B18').setFontWeight('bold'); // Destaque da primeira linha.
+      sheet.getRange('B24').setFontWeight('bold'); // Separador antes do aniversário.
 
-    // Aplicar cores às células da legenda, como exemplos visuais.
-    sheet.getRange('B18:C18').setBackground('#e6b8af'); // Disponíveis do ano corrente.
-    sheet.getRange('B19:C19').setBackground('#fff2cc'); // Dias transitados do ano anterior.
-    sheet.getRange('B20:C20').setBackground('#d9d2e9'); // Gozadas.
-    sheet.getRange('B21:C21').setBackground('#d9d2e9'); // Planeadas.
-    sheet.getRange('B22:C22').setBackground('#d9d2e9'); // Total.
-    sheet.getRange('B23:C23').setBackground('#b6d7a8'); // Restantes.
-    sheet.getRange('B25:C27').setBackground('#d9ead3'); // Aniversário.
+      // Aplicar cores às células da legenda, como exemplos visuais.
+      sheet.getRange('B18:C18').setBackground('#e6b8af'); // Disponíveis do ano corrente.
+      sheet.getRange('B19:C19').setBackground('#fff2cc'); // Dias transitados do ano anterior.
+      sheet.getRange('B20:C20').setBackground('#d9d2e9'); // Gozadas.
+      sheet.getRange('B21:C21').setBackground('#d9d2e9'); // Planeadas.
+      sheet.getRange('B22:C22').setBackground('#d9d2e9'); // Total.
+      sheet.getRange('B23:C23').setBackground('#b6d7a8'); // Restantes.
+      sheet.getRange('B25:C27').setBackground('#d9ead3'); // Aniversário.
+    });
 
     Logger.log('✅ Sheet configurado com sucesso!');
     mostrarNotificacao('Legenda e contadores configurados!', 'Configuração completa', 3);

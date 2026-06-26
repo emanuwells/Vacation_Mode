@@ -1,91 +1,93 @@
-# Contexto Do Projeto
+# PROJECT_CONTEXT.md
 
-## Nome
+Contexto técnico vivo do projeto.
 
-Vacation Mode.
+## Identificação
 
-## Objetivo
-
-Automatizar a gestão de férias num Google Sheets, com contadores de dias e sincronização de períodos de férias para o Google Calendar.
-
-## Stack Técnica
-
-| Componente | Tecnologia |
+| Campo | Valor |
 | --- | --- |
-| Script principal | Google Apps Script, com sintaxe JavaScript |
-| Plataforma de execução | Google Sheets e Google Calendar |
-| Persistência | Próprio ficheiro Google Sheets e eventos no Google Calendar |
-| Código versionado | Repositório Git local |
+| Nome | Vacation Mode |
+| Descrição | Gestão de férias em Google Sheets com sincronização para Google Calendar |
+| Versão atual | 1.4.0 |
+| Estado | manutenção |
 
-## Estrutura Confirmada Do Repositório
+## Domínio
+
+- **Problema:** contabilizar dias de férias num calendário anual e refletir períodos no Google Calendar.
+- **Utilizadores:** pessoa ou equipa que gere férias numa folha de cálculo Google.
+- **Regras críticas:** apenas cores configuradas contam como férias ou aniversário; eventos gerados pelo script são identificados por título e marcador `[FERIAS_AUTO]`.
+- **Integrações:** Google Sheets, Google Calendar, Google Apps Script triggers.
+
+## Stack
+
+| Camada | Tecnologia | Observações |
+| --- | --- | --- |
+| Script | Google Apps Script | Ficheiro único `Vacation_Mode.js` |
+| Interface | Google Sheets | Menu `Gestão de Férias` |
+| Persistência | Folha + Calendar | Sem base de dados externa |
+| Distribuição | Git | Cópia manual para o Apps Script |
+
+## Estrutura do repositório
 
 | Caminho | Função |
 | --- | --- |
-| `Vacation_Mode.js` | Script principal para colar no editor do Google Apps Script. |
-| `README.md` | Documentação principal para utilização e manutenção. |
-| `CHANGELOG.md` | Histórico versionado das alterações. |
-| `CHANGELOG_POLICY.md` | Política de versionamento e changelog. |
-| `AGENTS.md` | Regras gerais para IAs que trabalham no repositório. |
-| `tasks/todo.md` | Plano e revisão das tarefas em curso. |
-| `tasks/lessons.md` | Lições aprendidas e padrões a evitar. |
-| `.gitignore` | Exclusões para metadados locais, ficheiros Office/Sheets e scripts locais. |
+| `Vacation_Mode.js` | Script principal |
+| `README.md` | Documentação de utilização |
+| `AGENTS.md` | Contrato operacional para IAs |
+| `COMMANDS.md` | Comandos reais de validação |
+| `CHANGELOG.md` | Histórico versionado |
+| `docs/ai/policies/CHANGELOG_POLICY.md` | Política de changelog |
+| `PROJECT_CONTEXT.md` | Este ficheiro |
+| `tasks/` | Plano e lições aprendidas |
+| `.github/SECURITY.md` | Política de segurança |
 
-## Configuração Confirmada
+## Fluxos críticos
 
-O objeto `CONFIG`, no topo de `Vacation_Mode.js`, concentra a configuração operacional:
+| Fluxo | Funções |
+| --- | --- |
+| Abertura | `onOpen()` cria o menu |
+| Sincronização manual | `sincronizarTudo()` |
+| Sincronização ao colorir | `onAlteracaoPlanilha()` → `sincronizarTudo({ automatico: true })` |
+| Contadores | `atualizarContadores()` |
+| Calendar | `sincronizarComCalendar()`, `obterCalendario()`, `limparEventosAntigos()` |
+| Triggers | `instalarTriggerAutomatico()`, `removerTriggerAutomatico()` |
+| Diagnóstico | `testarDetecaoCores()` |
 
-| Chave | Valor por omissão | Descrição |
-| --- | --- | --- |
-| `CALENDAR_RANGE` | `C5:AM16` | Grelha de calendário com 12 meses por 31 dias. |
-| `CORES.FERIAS_ATUAL` | `#d9d2e9` | Cor de férias do ano corrente. |
-| `CORES.FERIAS_ATUAL_ALT` | `#b4a7d6` | Variante aceite para férias do ano corrente. |
-| `CORES.FERIAS_ANTERIOR` | `#fff2cc` | Cor para dias transitados do ano anterior. |
-| `CORES.ANIVERSARIO` | `#d9ead3` | Cor para o dia de aniversário. |
-| `CALENDARIO.NOME` | vazio | Usa o calendário principal quando fica vazio. |
-| `CALENDARIO.TITULO_EVENTO` | `Férias` | Título-base dos eventos criados. |
-| `CALENDARIO.MARCADOR` | `[FERIAS_AUTO]` | Marcador usado para identificar eventos criados pelo script. |
+## Comandos reais
 
-## Fluxos Críticos
+Ver `COMMANDS.md`. Validação local principal:
 
-- `onOpen()` cria o menu `Gestão de Férias` no Google Sheets.
-- `sincronizarTudo()` atualiza contadores e sincroniza todos os calendários anuais encontrados.
-- `atualizarContadores()` calcula férias gozadas, planeadas, totais, restantes e contadores de aniversário.
-- `sincronizarComCalendar()` cria eventos no Google Calendar, agrupando datas consecutivas.
-- `instalarTriggerAutomatico()` instala trigger temporal de 5 minutos e trigger `onChange`.
-- `testarDetecaoCores()` ajuda a diagnosticar cores reconhecidas pelo script.
-- `configurarSheet()` cria a legenda e as células de contadores numa folha nova.
-- `atualizarCoresAutomaticamente()` sugere cores encontradas na grelha, mas não altera o `CONFIG` automaticamente.
+```bash
+node --check Vacation_Mode.js
+```
 
-## Comandos Principais
+## Política de segredos
 
-Não há comandos locais obrigatórios confirmados. O fluxo principal é manual, através do Google Apps Script:
+Não versionar credenciais, `.clasp.json` nem `appsscript.json`.
 
-1. Copiar `Vacation_Mode.js` para o editor do Apps Script.
-2. Guardar o projeto.
-3. Recarregar o Google Sheets para disponibilizar o menu.
-4. Executar as opções do menu `Gestão de Férias`.
+## Critérios de verificação
 
-## Política De Segredos
+- Documentação alinhada com `Vacation_Mode.js`.
+- `CHANGELOG.md` e `VERSION` atualizados em alterações versionáveis.
+- Português europeu com acentuação correta.
 
-O repositório não deve conter credenciais, tokens, ficheiros `.clasp.json` nem `appsscript.json`. Estes ficheiros estão ignorados no `.gitignore`.
+## Decisões técnicas
 
-## Critérios De Verificação Antes De Concluir
+- Distribuição como ficheiro único para facilitar cópia manual.
+- Configuração centralizada em `CONFIG`.
+- `onChange` usa handler dedicado `onAlteracaoPlanilha` para evitar loops quando o script atualiza contadores.
+- `PropertiesService` suprime reentrância durante escrita do script.
+- Deteção de folhas alargada para nomes como `Calendário de férias`.
 
-- Confirmar que a documentação descreve apenas funcionalidades existentes no script.
-- Confirmar que o README e este contexto não se contradizem.
-- Atualizar `CHANGELOG.md` quando houver alteração versionável.
-- Rever português europeu, acentuação e terminologia técnica.
+## Riscos
 
-## Decisões Técnicas Atuais
+| Risco | Mitigação |
+| --- | --- |
+| Permissões Google | Autorizar script na primeira execução |
+| Sem testes automatizados no runtime Google | Validação manual documentada no README |
+| Triggers antigos com handler obsoleto | Reativar sincronização automática após atualizar o script |
 
-- O script é distribuído como ficheiro único para facilitar cópia manual para o Apps Script.
-- A configuração fica centralizada no objeto `CONFIG`.
-- A deteção multi-ano depende de folhas cujo nome contenha `Calendario YYYY` ou `Calendário YYYY`.
-- Os eventos do Calendar são identificados pelo título configurado e pelo marcador `[FERIAS_AUTO]`.
-- A distribuição continua a ser manual, sem dependências locais, Docker ou processo de build confirmado.
+## Pendências
 
-## Riscos E Pendências
-
-- A execução real depende de permissões do Google Apps Script e do Google Calendar.
-- Não existe teste automatizado local confirmado.
-- Alterações em mensagens internas devem ser validadas no Apps Script, porque o ambiente de execução real é externo ao repositório.
+- Não existe pipeline CI/CD confirmado.
+- Não existe `docs/architecture/` completo; não é necessário para a escala atual do projeto.

@@ -2,264 +2,179 @@
 
 ![Stack](https://img.shields.io/badge/stack-Google%20Apps%20Script%20%7C%20Google%20Sheets%20%7C%20Google%20Calendar-4285f4)
 ![Runtime](https://img.shields.io/badge/runtime-Google%20Apps%20Script-34a853)
-![Version](https://img.shields.io/badge/version-1.3.5-f39c12)
+![Version](https://img.shields.io/badge/version-1.4.0-f39c12)
 ![License](https://img.shields.io/badge/license-MIT-2ecc71)
 
-Automatização de férias para Google Sheets, com contadores anuais e sincronização direta com o Google Calendar.
-
-> **Nota:** este projeto é distribuído como um único ficheiro Google Apps Script (`Vacation_Mode.js`) para ser copiado para o editor do Apps Script associado ao Google Sheets.
+Script Google Apps Script para gerir férias numa folha de cálculo anual e sincronizar períodos com o Google Calendar.
 
 ## Índice
 
-- [Visão Geral](#visão-geral)
+- [Visão geral](#visão-geral)
 - [Funcionalidades](#funcionalidades)
-- [Stack Técnica](#stack-técnica)
+- [Stack](#stack)
 - [Requisitos](#requisitos)
 - [Instalação](#instalação)
 - [Configuração](#configuração)
 - [Utilização](#utilização)
-- [Estrutura Esperada Da Folha](#estrutura-esperada-da-folha)
-- [Comandos E Menus](#comandos-e-menus)
-- [Funções De Manutenção](#funções-de-manutenção)
-- [Arquitetura Técnica](#arquitetura-técnica)
-- [Testes E Validação](#testes-e-validação)
-- [Troubleshooting](#troubleshooting)
-- [Segurança E Segredos](#segurança-e-segredos)
+- [Estrutura da folha](#estrutura-da-folha)
+- [Menus e funções](#menus-e-funções)
+- [Arquitetura](#arquitetura)
+- [Validação](#validação)
+- [Resolução de problemas](#resolução-de-problemas)
+- [Segurança](#segurança)
 - [Manutenção](#manutenção)
 - [Licença](#licença)
 
-## Visão Geral
+## Visão geral
 
-O Vacation Mode automatiza a gestão de férias num calendário em Google Sheets. O utilizador pinta os dias no calendário, e o script:
+O projeto distribui um único ficheiro (`Vacation_Mode.js`) para colar no editor do Google Apps Script associado a uma folha de cálculo com calendário anual.
 
-- conta férias gozadas, planeadas, totais e restantes;
-- conta o dia de aniversário;
-- cria eventos de dia inteiro no Google Calendar;
-- agrupa dias consecutivos num único evento;
-- suporta várias folhas anuais no mesmo ficheiro.
+O fluxo principal:
 
-O projeto foi inspirado no calendário em Excel com feriados da Economia e Finanças: <https://economiafinancas.com/>.
+1. O utilizador pinta dias de férias e aniversário na grelha.
+2. O script conta dias gozados, planeados e restantes.
+3. O script cria ou atualiza eventos de dia inteiro no Google Calendar, agrupando dias consecutivos.
 
 ## Funcionalidades
 
-| Área | Funcionalidade |
+| Área | Descrição |
 | --- | --- |
-| Contadores | Cálculo automático de férias gozadas, férias planeadas, total planeado, dias restantes e dia de aniversário. |
-| Multi-ano | Deteção de folhas com nomes como `Calendario 2025` ou `Calendário 2026`. |
-| Google Calendar | Criação de eventos de dia inteiro com título configurável e descrição com referência à folha. |
+| Contadores | Cálculo de férias gozadas, planeadas, totais, restantes e dia de aniversário. |
+| Multi-folha | Suporte a várias folhas anuais no mesmo ficheiro. |
+| Google Calendar | Criação de eventos com título configurável e marcador interno. |
 | Agrupamento | Dias consecutivos são reunidos num único evento. |
-| Proteção contra duplicados | Eventos criados pelo script são identificados pelo título e pelo marcador `[FERIAS_AUTO]`. |
-| Automação | Triggers opcionais para sincronização a cada 5 minutos e quando há alterações na folha. |
-| Diagnóstico | Menu para testar cores detetadas na grelha do calendário. |
+| Sincronização ao colorir | Trigger `onChange` reage a alterações de cor e formato na folha. |
+| Automação | Trigger temporal opcional a cada 5 minutos. |
+| Diagnóstico | Função para validar cores reconhecidas na grelha. |
 
-## Stack Técnica
+## Stack
 
 | Componente | Tecnologia |
 | --- | --- |
-| Script | Google Apps Script, com sintaxe JavaScript |
+| Script | Google Apps Script (JavaScript) |
 | Interface | Menu personalizado no Google Sheets |
-| Integração | `SpreadsheetApp`, `CalendarApp`, `ScriptApp` e `LockService` |
-| Dados | Células do Google Sheets e eventos no Google Calendar |
-| Distribuição | Cópia manual do ficheiro `Vacation_Mode.js` para o Apps Script |
+| Integração | `SpreadsheetApp`, `CalendarApp`, `ScriptApp`, `LockService`, `PropertiesService` |
+| Distribuição | Cópia manual de `Vacation_Mode.js` |
 
 ## Requisitos
 
 - Conta Google com acesso ao Google Sheets e Google Calendar.
-- Um Google Sheets com grelha anual de calendário.
-- Permissão para editar o ficheiro e autorizar o Apps Script.
-- Acesso ao calendário principal ou a um calendário próprio indicado em `CONFIG.CALENDARIO.NOME`.
+- Folha de cálculo com grelha anual configurável.
+- Autorização do script na primeira execução.
 
-Não há dependências locais obrigatórias nem processo de build confirmado.
+Não há dependências locais nem processo de build.
 
 ## Instalação
 
-1. Abra o Google Sheets onde pretende gerir as férias.
-2. Aceda a `Extensões` > `Apps Script`.
-3. Apague o código existente no editor, se for seguro fazê-lo.
-4. Cole o conteúdo de `Vacation_Mode.js`.
-5. Guarde o projeto.
-6. Volte ao Google Sheets e recarregue a página.
-7. Confirme que aparece o menu `Gestão de Férias`.
-
-Na primeira execução de ações que acedem ao Calendar, o Google pode pedir autorização para o script consultar e criar eventos.
+1. Abrir a folha de cálculo alvo.
+2. Ir a `Extensões` > `Apps Script`.
+3. Colar o conteúdo de `Vacation_Mode.js`.
+4. Guardar o projeto.
+5. Recarregar a folha e confirmar o menu `Gestão de Férias`.
+6. Executar `Ativar Sincronização Automática` se quiser sincronização ao colorir.
 
 ## Configuração
 
-A configuração principal fica no objeto `CONFIG`, no topo de `Vacation_Mode.js`.
-
-### Intervalo Do Calendário
+A configuração principal está no objeto `CONFIG`, no topo de `Vacation_Mode.js`.
 
 | Chave | Valor por omissão | Descrição |
 | --- | --- | --- |
-| `CALENDAR_RANGE` | `C5:AM16` | Intervalo com 12 linhas, uma por mês, e até 31 colunas, uma por dia. |
-
-Altere este valor se a grelha anual do seu Google Sheets estiver noutro local.
-
-### Cores Reconhecidas
-
-| Chave | Cor | Uso |
-| --- | --- | --- |
-| `CORES.FERIAS_ATUAL` | `#d9d2e9` | Férias planeadas do ano corrente. |
-| `CORES.FERIAS_ATUAL_ALT` | `#b4a7d6` | Variante aceite para férias do ano corrente. |
+| `CALENDAR_RANGE` | `C5:AM16` | Intervalo da grelha anual (12 meses × até 31 dias). |
+| `CORES.FERIAS_ATUAL` | `#d9d2e9` | Férias do ano corrente. |
+| `CORES.FERIAS_ATUAL_ALT` | `#b4a7d6` | Variante aceite de férias. |
 | `CORES.FERIAS_ANTERIOR` | `#fff2cc` | Dias transitados do ano anterior. |
 | `CORES.ANIVERSARIO` | `#d9ead3` | Dia de aniversário. |
+| `CALENDARIO.NOME` | vazio | Calendário principal quando vazio. |
+| `CALENDARIO.TITULO_EVENTO` | `Férias` | Título-base dos eventos. |
+| `CALENDARIO.MARCADOR` | `[FERIAS_AUTO]` | Marcador dos eventos gerados pelo script. |
 
-Use o menu `Testar Deteção de Cores` se os contadores não reconhecerem os dias pintados.
-
-Se a folha usar cores diferentes, execute `atualizarCoresAutomaticamente()` no editor do Apps Script para obter sugestões no log. Esta função não altera o código sozinha; serve apenas para indicar quais as cores mais usadas na grelha.
-
-### Células Dos Contadores
-
-| Chave | Célula | Descrição |
-| --- | --- | --- |
-| `FERIAS_DISPONIVEIS` | `C18` | Dias disponíveis no ano corrente, preenchidos manualmente. |
-| `FERIAS_ANTERIOR` | `C19` | Dias transitados do ano anterior, preenchidos manualmente. |
-| `FERIAS_GOZADAS` | `C20` | Dias de férias já passados. |
-| `FERIAS_PLANEADAS` | `C21` | Dias de férias futuros. |
-| `FERIAS_TOTAL` | `C22` | Soma de férias gozadas e planeadas. |
-| `FERIAS_RESTANTES` | `C23` | Saldo restante. |
-| `ANIVERSARIO_DISPONIVEL` | `C25` | Dia de aniversário disponível. |
-| `ANIVERSARIO_GOZADO` | `C26` | Dia de aniversário já gozado. |
-| `ANIVERSARIO_A_GOZAR` | `C27` | Dia de aniversário ainda por gozar. |
-
-### Google Calendar
-
-| Chave | Valor por omissão | Descrição |
-| --- | --- | --- |
-| `CALENDARIO.NOME` | vazio | Usa o calendário principal quando fica vazio. |
-| `CALENDARIO.TITULO_EVENTO` | `Férias` | Título-base dos eventos criados. |
-| `CALENDARIO.ANO` | ano atual | Fallback quando a folha não contém ano no nome. |
-| `CALENDARIO.MARCADOR` | `[FERIAS_AUTO]` | Marcador interno para identificar eventos gerados pelo script. |
+As células dos contadores estão em `CONFIG.CELULAS` (por omissão, coluna `C`, linhas `18`–`27`).
 
 ## Utilização
 
-### Fluxo Manual Recomendado
+### Fluxo manual
 
-1. Garanta que a folha tem nome como `Calendario 2026` ou `Calendário 2026`.
-2. Pinte os dias de férias com uma das cores configuradas.
-3. Pinte o dia de aniversário com a cor configurada, se aplicável.
-4. Abra o menu `Gestão de Férias`.
-5. Execute `SINCRONIZAR TUDO`.
+1. Pintar os dias de férias com uma cor configurada.
+2. Abrir `Gestão de Férias` > `SINCRONIZAR TUDO`.
 
-Este fluxo atualiza os contadores e sincroniza os eventos do Google Calendar numa única ação.
+### Sincronização automática ao colorir
 
-### Sincronização Automática
+1. Abrir `Gestão de Férias` > `Ativar Sincronização Automática`.
+2. Pintar ou alterar dias na grelha anual.
+3. O script sincroniza contadores e Calendar após alterações de cor (`FORMAT`) ou edição relevante (`EDIT`).
 
-1. Abra o menu `Gestão de Férias`.
-2. Execute `Ativar Sincronização Automática`.
-3. Autorize o script, se o Google pedir permissões.
+Também existe um trigger temporal de 5 minutos como rede de segurança.
 
-O script instala:
+## Estrutura da folha
 
-- um trigger temporal que executa `sincronizarTudo()` a cada 5 minutos;
-- um trigger `onChange` para apanhar alterações de formatação e cor.
+- Grelha anual em `CONFIG.CALENDAR_RANGE`.
+- Cada linha representa um mês; cada coluna, um dia.
+- Folhas com nomes como `Calendário 2026` ou `Calendário de férias` são detetadas automaticamente.
+- Se o nome da folha não contiver ano, usa-se o ano corrente.
 
-Use `Desativar Sincronização Automática` para remover estes triggers.
+## Menus e funções
 
-### Apenas Contadores Ou Apenas Calendar
-
-| Ação | Quando usar |
-| --- | --- |
-| `Atualizar Contadores` | Quando só quer recalcular valores no Google Sheets. |
-| `Sincronizar com Calendar` | Quando os contadores já estão corretos e só quer atualizar eventos. |
-
-## Estrutura Esperada Da Folha
-
-- A grelha anual deve estar em `C5:AM16`, salvo alteração de `CONFIG.CALENDAR_RANGE`.
-- Cada linha representa um mês.
-- As colunas representam os dias do mês.
-- As células de dias devem conter números, texto numérico ou datas reais formatadas como dia.
-- As folhas anuais devem conter um ano no nome, por exemplo `Calendario 2025`.
-
-Se nenhuma folha com esse padrão for encontrada, o script usa a folha ativa como fallback.
-
-## Comandos E Menus
-
-Não existem comandos locais obrigatórios. A operação diária é feita pelo menu criado no Google Sheets.
-
-| Menu | Função Apps Script | Efeito |
+| Menu | Função | Efeito |
 | --- | --- | --- |
-| `SINCRONIZAR TUDO` | `sincronizarTudo` | Atualiza contadores e sincroniza eventos para todas as folhas anuais. |
-| `Atualizar Contadores` | `atualizarContadores` | Recalcula apenas os contadores da folha. |
-| `Sincronizar com Calendar` | `sincronizarComCalendar` | Atualiza apenas os eventos no Google Calendar. |
-| `Ativar Atualização ao Editar` | `instalarTrigger` | Instala trigger `onEdit` para contadores. |
-| `Ativar Sincronização Automática` | `instalarTriggerAutomatico` | Instala sincronização periódica e `onChange`. |
-| `Desativar Atualização ao Editar` | `removerTrigger` | Remove o trigger `onEdit`. |
-| `Desativar Sincronização Automática` | `removerTriggerAutomatico` | Remove triggers automáticos de sincronização. |
-| `Testar Deteção de Cores` | `testarDetecaoCores` | Regista e mostra diagnóstico das cores reconhecidas. |
-| `Ajuda` | `mostrarAjuda` | Mostra instruções rápidas dentro do Google Sheets. |
+| `SINCRONIZAR TUDO` | `sincronizarTudo` | Atualiza contadores e Calendar. |
+| `Atualizar Contadores` | `atualizarContadores` | Recalcula apenas contadores. |
+| `Sincronizar com Calendar` | `sincronizarComCalendar` | Atualiza apenas eventos. |
+| `Ativar Sincronização Automática` | `instalarTriggerAutomatico` | Instala triggers de 5 min e `onChange`. |
+| `Testar Deteção de Cores` | `testarDetecaoCores` | Diagnóstico de cores na grelha. |
 
-## Funções De Manutenção
+Funções auxiliares no editor do Apps Script: `configurarSheet()`, `atualizarCoresAutomaticamente()`.
 
-Estas funções existem no script, mas são pensadas para uso pontual a partir do editor do Apps Script.
-
-| Função | Quando usar | Efeito |
-| --- | --- | --- |
-| `configurarSheet()` | Ao preparar uma folha nova que ainda não tem legenda nem células de contadores. | Cria a legenda em `B18:C28`, aplica cores de referência e executa uma atualização inicial dos contadores. |
-| `testarDetecaoCores()` | Quando os dias pintados não estão a ser reconhecidos. | Regista no log as cores encontradas em células numéricas da grelha e mostra uma notificação resumida. |
-| `atualizarCoresAutomaticamente()` | Quando é necessário descobrir que cores foram mais usadas na grelha. | Sugere no log possíveis valores para as cores de férias e aniversário; a alteração do `CONFIG` continua a ser manual. |
-
-## Arquitetura Técnica
+## Arquitetura
 
 ```mermaid
 flowchart LR
-  A[Google Sheets] --> B[Menu Gestão de Férias]
+  A[Google Sheets] --> B[onAlteracaoPlanilha / Menu]
   B --> C[Atualizar contadores]
   B --> D[Sincronizar Calendar]
-  C --> E[Ler valores e cores em CONFIG.CALENDAR_RANGE]
+  C --> E[Ler cores em CONFIG.CALENDAR_RANGE]
   D --> F[Agrupar datas consecutivas]
   F --> G[Criar eventos no Google Calendar]
-  G --> H[Marcar eventos com FERIAS_AUTO]
 ```
 
-### Módulos Lógicos
+## Validação
 
-| Área | Funções principais |
-| --- | --- |
-| Deteção de folhas e datas | `obterFolhasCalendario`, `obterAnoDaSheet`, `obterDataDaCelula` |
-| Contadores | `atualizarContadores`, `processarCelula`, `atualizarCelulasContadores` |
-| Calendar | `sincronizarComCalendar`, `obterCalendario`, `limparEventosAntigos`, `agruparDatasConsecutivas` |
-| Triggers | `instalarTrigger`, `instalarTriggerAutomatico`, `removerTrigger`, `removerTriggerAutomatico` |
-| Diagnóstico e manutenção | `testarDetecaoCores`, `atualizarCoresAutomaticamente`, `configurarSheet`, `mostrarAjuda` |
+Localmente:
 
-## Testes E Validação
+```bash
+node --check Vacation_Mode.js
+```
 
-Não há testes automatizados locais confirmados.
+No Google Sheets:
 
-Validação manual recomendada:
+1. Pintar dois dias consecutivos de férias.
+2. Executar `Testar Deteção de Cores`.
+3. Executar `SINCRONIZAR TUDO` ou ativar sincronização automática.
+4. Confirmar contadores e um evento agrupado no Calendar.
 
-1. Criar ou duplicar uma folha `Calendario YYYY`.
-2. Pintar um conjunto pequeno de dias de férias, incluindo pelo menos dois dias consecutivos.
-3. Executar `Testar Deteção de Cores`.
-4. Executar `SINCRONIZAR TUDO`.
-5. Confirmar que os contadores foram atualizados.
-6. Confirmar que o Google Calendar recebeu um evento agrupado.
-7. Reexecutar `SINCRONIZAR TUDO` e confirmar que não surgem duplicados.
-
-## Troubleshooting
+## Resolução de problemas
 
 | Problema | Verificação |
 | --- | --- |
-| O menu não aparece | Recarregue o Google Sheets e confirme que o código foi guardado no Apps Script. |
-| Os dias pintados não contam | Execute `Testar Deteção de Cores` e compare as cores com `CONFIG.CORES`. |
-| Eventos não são criados | Confirme permissões do Apps Script e acesso ao calendário configurado. |
-| Eventos duplicados | Confirme que `CALENDARIO.TITULO_EVENTO` e `CALENDARIO.MARCADOR` não foram alterados entre execuções. |
-| Ano errado | Confirme que o nome da folha contém o ano correto, como `Calendário 2026`. |
-| Contadores em células erradas | Ajuste `CONFIG.CELULAS` para coincidir com a legenda da folha. |
+| Menu ausente | Recarregar a folha e confirmar que o script foi guardado. |
+| Cores não contam | Executar `Testar Deteção de Cores` e ajustar `CONFIG.CORES`. |
+| Colorir não sincroniza | Reativar `Ativar Sincronização Automática` para instalar `onAlteracaoPlanilha`. |
+| Eventos duplicados | Confirmar que `CALENDARIO.MARCADOR` não foi alterado entre execuções. |
+| Ano incorreto | Incluir o ano no nome da folha ou ajustar `CONFIG.CALENDARIO.ANO`. |
 
-## Segurança E Segredos
+## Segurança
 
-- Não versionar credenciais, tokens, `.clasp.json` ou `appsscript.json`.
-- O `.gitignore` já exclui metadados locais do Google Apps Script e ficheiros Office/Sheets.
-- O script deve ser autorizado apenas por utilizadores que compreendam que ele pode ler a folha e criar/remover eventos no Calendar configurado.
+- Não versionar `.clasp.json`, `appsscript.json` nem credenciais.
+- O script lê a folha e pode criar ou remover eventos no calendário configurado.
+
+Ver também [`.github/SECURITY.md`](.github/SECURITY.md).
 
 ## Manutenção
 
-- Consulte o histórico em [`CHANGELOG.md`](CHANGELOG.md).
-- Consulte a política de versionamento em [`CHANGELOG_POLICY.md`](CHANGELOG_POLICY.md).
-- Mantenha o contexto técnico em [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md).
-- Ao alterar configuração, fluxos, comandos ou comportamento, atualize a documentação na mesma alteração.
+- Histórico: [`CHANGELOG.md`](CHANGELOG.md)
+- Política de versionamento: [`docs/ai/policies/CHANGELOG_POLICY.md`](docs/ai/policies/CHANGELOG_POLICY.md)
+- Contexto técnico: [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md)
+- Comandos: [`COMMANDS.md`](COMMANDS.md)
 
 ## Licença
 
-MIT. Atribuição apreciada: Emanuel Ferreira ([@emanuwells](https://github.com/emanuwells)).
+MIT.

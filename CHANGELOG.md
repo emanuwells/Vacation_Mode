@@ -1,5 +1,41 @@
 # Changelog
 
+## [1.4.0] - 2026-06-26T12:00:00+01:00
+
+### Sincronização ao colorir e alinhamento com template
+
+**Motivo:**
+- Alinhar o repositório com a estrutura mínima do template de repositório.
+- Restaurar a sincronização com o Google Calendar quando o utilizador pinta células na grelha anual.
+
+**Impacto:**
+- A documentação passa a seguir o contrato do `AGENTS.md` do template, com políticas em `docs/ai/policies/`.
+- A sincronização automática deixa de entrar em loop quando o script atualiza contadores.
+- Folhas com nomes como `Calendário de férias` passam a ser detetadas corretamente.
+- O calendário principal é usado de imediato quando `CONFIG.CALENDARIO.NOME` está vazio.
+
+**Alterações:**
+- `AGENTS.md`: substituído pelo contrato operacional do template, com exceções documentadas para este projeto.
+- `COMMANDS.md`: criado com comandos reais de validação.
+- `VERSION`: criado com `1.4.0`.
+- `.github/SECURITY.md`: criado.
+- `docs/ROOT_STRUCTURE.md`: criado.
+- `docs/ai/policies/CHANGELOG_POLICY.md`: política movida da raiz.
+- `CHANGELOG_POLICY.md`: removido da raiz.
+- `README.md`: reescrito de forma agnóstica e profissional.
+- `PROJECT_CONTEXT.md`: reescrito com estrutura do template.
+- `Vacation_Mode.js`: adicionados `onAlteracaoPlanilha`, supressão de onChange, deteção alargada de folhas e correção de `obterCalendario`.
+- `tasks/todo.md` e `tasks/lessons.md`: atualizados.
+
+**Validação:**
+- `node --check Vacation_Mode.js`
+- Revisão cruzada entre documentação e código.
+
+**Diff:**
+- Estrutura mínima do template + correção da sincronização ao colorir via handler dedicado de `onChange`.
+
+---
+
 ## [1.3.5] - 2026-05-18
 ### Motivo
 - Alinhar a documentação principal e a política de changelog com as regras atuais do `AGENTS.md`.

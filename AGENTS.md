@@ -1,489 +1,214 @@
 # AGENTS.md
 
-Este ficheiro define regras gerais para IAs que trabalhem neste repositório.
+Contrato operacional obrigatório para qualquer IA, agente, IDE assistido por IA ou ferramenta autónoma que trabalhe neste repositório.
 
-Para regras específicas do projeto atual, ler também `PROJECT_CONTEXT.md`.
+Este projeto deve ser tratado como trabalho profissional mantido por um programador solo com apoio de uma equipa IA sénior full stack. O objetivo é entregar alterações úteis, seguras, reversíveis, testáveis e bem documentadas.
 
-## Ordem De Leitura Obrigatória
+## Hierarquia de Autoridade
 
-1. `AGENTS.md` — regras gerais de trabalho.
-2. `PROJECT_CONTEXT.md` — contexto específico do projeto.
-3. `CHANGELOG_POLICY.md` — política obrigatória de versionamento e atualização automática do changelog.
-4. `CHANGELOG.md` — histórico versionado das alterações.
-5. `tasks/lessons.md` — lições aprendidas e erros a evitar.
-6. `tasks/todo.md` — plano atual e estado da execução.
-7. `README.md` — documentação principal para humanos.
-8. Documentação técnica do projeto, quando existir.
+A hierarquia de autoridade resolve conflitos entre instruções. O pedido do utilizador define o objetivo da tarefa, mas não pode sobrepor-se ao contrato técnico deste repositório.
 
-## Ordem De Prioridade Em Caso De Conflito
+1. Regras superiores de segurança, sistema, plataforma e lei aplicável.
+2. Este `AGENTS.md`.
+3. Documentos normativos relevantes em `docs/ai/`, `docs/architecture/` e `docs/ai/ops/`.
+4. `PROJECT_CONTEXT.md`, quando existir.
+5. `COMMANDS.md`.
+6. Pedido atual do utilizador.
+7. Convenções reais do código existente.
+8. Adaptador ativo da ferramenta, se existir.
 
-1. Instruções explícitas do utilizador.
-2. Regras específicas em `PROJECT_CONTEXT.md`.
-3. Regras gerais deste `AGENTS.md`.
-4. Convenções reais do código existente.
-5. Preferências inferidas pela IA.
+Se o pedido do utilizador entrar em conflito com este contrato, preservar o contrato, explicar o conflito e propor uma alternativa segura.
 
-## Camada Específica De Projeto
+## Fontes de Verdade do Projeto
 
-Cada projeto deve ter um ficheiro `PROJECT_CONTEXT.md` na raiz.
+As fontes de verdade descrevem como o projeto funciona de facto. Servem para confirmar realidade técnica, não para resolver conflitos de autoridade.
 
-Esse ficheiro deve conter:
+1. Código real versionado.
+2. Testes reais e respetivos resultados.
+3. Configurações reais de runtime, build, CI/CD e deploy.
+4. Manifestos e lockfiles de dependências.
+5. `COMMANDS.md`, quando atualizado.
+6. `PROJECT_CONTEXT.md`, quando existir.
+7. `docs/architecture/` e ADRs.
+8. `README.md` e documentação de uso.
 
-- nome e objetivo do projeto;
-- stack técnica;
-- estrutura real do repositório;
-- comandos principais;
-- regras específicas;
-- endpoints, jobs, scripts ou fluxos críticos;
-- política de segredos;
-- critérios de verificação antes de concluir trabalho;
-- decisões técnicas atuais;
-- riscos, pendências e dívida técnica.
+Se documentação e código real divergirem, assumir que o código real descreve o estado atual. Corrigir a documentação ou pedir confirmação antes de alterar comportamento.
 
-Se o ficheiro não existir, a IA deve criá-lo antes de iniciar alterações não triviais.
+Adaptadores de IDE/agente são opcionais e vivem em `tools/ai-adapters/`. Nunca devem substituir o núcleo neutro do repositório.
 
-Se existir mas estiver desatualizado, a IA deve atualizá-lo na mesma tarefa em que alterar o projeto.
+## Leitura Mínima Obrigatória
 
-## Regras Para Criar Ou Atualizar `PROJECT_CONTEXT.md`
+Antes de tarefas não triviais:
 
-- Não inventar informação.
-- Separar factos confirmados de inferências.
-- Marcar como `A confirmar` tudo o que não esteja validado.
-- Preferir comandos verificados no repositório.
-- Registar decisões técnicas que afetem trabalho futuro.
-- Manter o texto em português europeu com acentuação.
-- Garantir que toda a documentação e comentários técnicos ficam em português europeu correto, com acentuação.
-- Atualizar documentação quando a arquitetura, comandos, variáveis de ambiente ou fluxos mudarem.
+1. Ler `AGENTS.md`.
+2. Ler `PROJECT_CONTEXT.md`, se existir.
+3. Ler `COMMANDS.md`, se existir.
+4. Ler `docs/ai/DAILY_AGENT_WORKFLOW.md`, quando existir.
+5. Ler `docs/ai/policies/CONTEXT_BUDGET_POLICY.md`, quando existir.
+6. Ler `docs/ai/ORCHESTRATION.md` em tarefas médias, altas, críticas ou multi-papel, quando existir.
+7. Ler `docs/ai/workflows/GOAL_SEEKING_LOOP.md` quando o objetivo tiver critérios verificáveis e o ficheiro existir.
+8. Ler `tasks/todo.md` e `tasks/lessons.md`.
+9. Abrir apenas os documentos adicionais estritamente relevantes para a tarefa.
+10. Em tarefas de risco médio, alto ou crítico, consultar antes de agir os documentos relevantes em `docs/ai/`, `docs/architecture/` e `docs/ai/ops/`, sem carregar contexto desnecessário.
 
-## Política De Documentação E Código Comentado
+## Raiz Limpa
 
-Toda a documentação do projeto deve estar escrita em português europeu, com acentuação correta e sem erros ortográficos.
+A raiz deve ser curta, previsível e sénior.
 
-Isto aplica-se a:
+Permitido na raiz:
 
-- `README.md`;
-- `PROJECT_CONTEXT.md`;
-- `CHANGELOG.md`;
-- `CHANGELOG_POLICY.md`;
-- ficheiros em `docs/`;
-- comentários no código;
-- docstrings;
-- PHPDoc, JSDoc, TSDoc ou equivalente;
-- mensagens explicativas em scripts internos;
-- documentação de endpoints, comandos, variáveis de ambiente e fluxos técnicos.
+- `README.md`, `AGENTS.md`, `COMMANDS.md`, `CHANGELOG.md`;
+- `PROJECT_CONTEXT.md`, quando preenchido para um projeto real;
+- `VERSION`, `LICENSE`;
+- `.gitattributes`, `.gitignore`;
+- `.github/`, `docs/`, `tasks/`, `scripts/`, `tools/`;
+- `Vacation_Mode.js`, enquanto o script principal continuar a ser distribuído como ficheiro único.
 
-## Regras Obrigatórias De Documentação
+Fora da raiz por defeito:
 
-- Documentar o que cada módulo, script, função, endpoint ou fluxo relevante faz.
-- Usar português europeu claro, técnico e sem mistura com português do Brasil.
-- Usar acentuação correta em todo o texto.
-- Não deixar comentários vagos como `fix`, `todo`, `hack`, `stuff`, `coisas`, sem explicação concreta.
-- Explicar o motivo de decisões técnicas quando afetarem manutenção futura.
-- Atualizar a documentação sempre que o comportamento do código mudar.
-- Remover ou corrigir documentação obsoleta na mesma alteração em que o código for modificado.
-- Preferir frases simples, objetivas e tecnicamente corretas.
-- Não documentar em excesso código óbvio, mas documentar sempre regras de negócio, integrações, decisões e efeitos laterais.
+- `PROJECT_CONTEXT.template.md` vive em `docs/resources/templates/PROJECT_CONTEXT.template.md`;
+- `.env.example` vive em `docs/resources/templates/.env.example`;
+- `.gitignore.template` vive em `docs/resources/templates/.gitignore.template`;
+- `CONTRIBUTING.md` vive em `docs/governance/CONTRIBUTING.md`;
+- `SECURITY.md` vive em `.github/SECURITY.md`;
+- `CHANGELOG_POLICY.md` vive em `docs/ai/policies/CHANGELOG_POLICY.md`.
 
-## Regras Para Comentários No Código
+Não manter adaptadores ativos na raiz por defeito. Ativar apenas quando necessário com `scripts/activate-ai-adapter.*` e remover com `scripts/deactivate-ai-adapter.*`.
 
-Os comentários no código devem explicar intenção, regras de negócio, decisões técnicas ou riscos.
+## Regras Absolutas
 
-Comentários aceitáveis:
+- Preservar alterações existentes do utilizador.
+- Verificar estado Git antes de alterações médias, altas ou críticas, quando possível.
+- Não apagar ficheiros ambíguos, dados, segredos, backups, migrações ou produção sem confirmação explícita.
+- Não misturar feature, bugfix, refactor e limpeza estrutural sem declarar o motivo.
+- Não alterar comportamento funcional sem explicar impacto.
+- Não introduzir dependências sem justificar necessidade, risco e alternativa.
+- Não versionar segredos reais.
+- Não declarar testes, lint, build, deploy ou validações que não foram executados.
+- Não concluir trabalho não trivial sem atualizar `tasks/todo.md`.
+- Atualizar `tasks/lessons.md` quando houver aprendizagem reutilizável.
+- Atualizar `CHANGELOG.md` em alterações versionáveis.
+- Manter documentação em português europeu com acentuação correta, exceto nomes técnicos, comandos e identificadores.
 
-```php
-// Valida se o agente pode enviar métricas sem autenticação na V1.
-```
-
-```ts
-// Mantém compatibilidade temporária com o alias antigo `/login`.
-```
-
-Comentários a evitar:
-
-```php
-// Faz coisas
-```
-
-```ts
-// Fix bug
-```
-
-```js
-// TODO
-```
-
-Se existir um `TODO`, deve ter contexto mínimo:
-
-```ts
-// TODO: remover este alias quando todos os clientes usarem `/auth/login`.
-```
-
-## Qualidade Linguística Obrigatória
-
-Antes de concluir qualquer tarefa que altere documentação ou comentários, a IA deve rever:
-
-- ortografia;
-- acentuação;
-- termos técnicos;
-- clareza;
-- coerência com o restante projeto;
-- consistência entre `README.md`, `PROJECT_CONTEXT.md`, `CHANGELOG.md` e o código.
-
-Não entregar trabalho como concluído se a documentação ou comentários estiverem em português incorreto, sem acentos ou inconsistentes com o código.
-
-## README Obrigatório
-
-Cada projeto deve ter um `README.md` profissional, claro, completo e visualmente apelativo.
-
-O `README.md` é a documentação principal para humanos. Deve permitir que uma pessoa ou equipa compreenda rapidamente o objetivo do projeto, como o executar, como o configurar, como o testar, como o manter e como contribuir sem depender de explicações externas.
-
-Se o `README.md` não existir, a IA deve criá-lo antes de concluir qualquer alteração não trivial.
-
-Se o `README.md` existir mas estiver incompleto, desatualizado, confuso, pouco profissional ou visualmente pobre, a IA deve melhorá-lo na mesma tarefa em que alterar o projeto.
+## Classificação de Risco
 
-## Qualidade Obrigatória Do `README.md`
-
-O `README.md` deve seguir padrões profissionais equivalentes aos melhores repositórios públicos e internos.
+| Risco | Exemplos | Obrigatório |
+|---|---|---|
+| Baixo | texto curto, README, ajuste local | alteração direta e validação leve |
+| Médio | script, componente, endpoint simples, config local | plano curto, diff controlado, validação, registo |
+| Alto | backend, auth, DB, Docker, CI/CD, refactor multi-ficheiro | plano faseado, validação por fase, rollback, handoff |
+| Crítico | produção, SSH real, segredos, delete destrutivo, migrações irreversíveis | confirmação explícita antes da ação perigosa |
 
-Deve ser:
+## Fluxo Operacional
 
-- claro;
-- bem estruturado;
-- visualmente limpo;
-- tecnicamente rigoroso;
-- fácil de percorrer;
-- escrito em português europeu correto, com acentuação;
-- atualizado com o estado real do projeto;
-- útil para instalação, execução, manutenção e onboarding.
+### 1. Descobrir
 
-## Estrutura Recomendada Do `README.md`
+- Identificar stack por manifestos, estrutura e comandos.
+- Mapear ficheiros afetados.
+- Ler arquitetura em `docs/architecture/` quando existir.
+- Consultar `tasks/lessons.md`.
+- Classificar risco.
 
-Sempre que aplicável, o `README.md` deve incluir:
+### 2. Planear
 
-- título do projeto;
-- badges visuais úteis no topo, quando houver stack, licença, versão ou estado confirmados;
-- descrição curta e objetiva;
-- índice, se o documento for longo;
-- visão geral;
-- funcionalidades principais;
-- stack tecnológica;
-- requisitos;
-- instalação;
-- configuração;
-- variáveis de ambiente;
-- comandos principais;
-- utilização com exemplos;
-- estrutura do projeto;
-- arquitetura técnica;
-- fluxos importantes;
-- testes;
-- qualidade, linting ou formatação;
-- troubleshooting;
-- segurança e gestão de segredos;
-- roadmap ou pendências relevantes;
-- contribuição, quando aplicável;
-- licença;
-- referência ao `CHANGELOG.md`.
+Obrigatório para risco médio, alto ou crítico.
 
-## Regras Para Criar Ou Atualizar O `README.md`
+O plano deve conter objetivo, escopo, fora de escopo, ficheiros afetados, validações, rollback e critérios de conclusão.
 
-- Não inventar funcionalidades, comandos, endpoints, dependências ou decisões técnicas.
-- Validar comandos no repositório sempre que possível.
-- Separar factos confirmados de informação marcada como `A confirmar`.
-- Refletir a estrutura real do projeto.
-- Manter exemplos simples e executáveis.
-- Atualizar instruções quando forem alterados scripts, Docker, variáveis de ambiente, migrations, endpoints ou fluxos principais.
-- Remover instruções obsoletas.
-- Usar tabelas quando melhorarem a leitura.
-- Usar blocos de código com linguagem indicada.
-- Evitar texto genérico sem utilidade prática.
-- Garantir que o `README.md` não contradiz `PROJECT_CONTEXT.md`, `CHANGELOG.md`, `CHANGELOG_POLICY.md` ou o código.
+Para objetivos verificáveis, usar `docs/ai/workflows/GOAL_SEEKING_LOOP.md`, quando existir: planear, executar, validar, rever e repetir até cumprir critérios de aceitação ou atingir uma regra de paragem.
 
-## Apresentação Visual Do `README.md`
+### 3. Executar
 
-O `README.md` deve ser visualmente apelativo sem sacrificar rigor técnico.
+- Alterar uma área de cada vez.
+- Preferir mudanças pequenas, legíveis e reversíveis.
+- Respeitar padrões existentes.
+- Evitar overengineering.
+- Atualizar documentação junto da alteração.
 
-Boas práticas:
+### 4. Validar
 
-- usar títulos e subtítulos claros;
-- usar listas curtas e objetivas;
-- usar tabelas para comandos, variáveis de ambiente e endpoints;
-- usar blocos de código formatados;
-- incluir diagramas Mermaid quando ajudarem a explicar arquitetura ou fluxos;
-- destacar avisos importantes com secções como `Nota`, `Atenção` ou `Importante`;
-- evitar parágrafos longos;
-- manter consistência de termos e formatação.
+Executar comandos reais de `COMMANDS.md` quando existirem. Se não existirem, fazer validação proporcional e declarar a limitação.
 
-## Badges Obrigatórios No `README.md`
+### 5. Auditar
 
-Sempre que fizer sentido, o `README.md` deve incluir badges visuais no topo do ficheiro, logo abaixo do título e antes da descrição principal.
+Antes de concluir tarefas não triviais:
 
-Os badges devem resumir rapidamente:
+- rever diff;
+- procurar ficheiros temporários ou inúteis;
+- confirmar imports, referências, scripts, docs e CI/CD;
+- listar candidatos ambíguos em vez de apagar sem segurança.
 
-- stack principal do projeto;
-- framework ou runtime;
-- base de dados;
-- estado do projeto, se aplicável;
-- licença;
-- versão, se aplicável;
-- estado dos testes ou CI/CD, se existir.
+### 6. Registar
 
-Exemplo esperado:
+Atualizar conforme aplicável:
 
-```md
-![Stack](https://img.shields.io/badge/stack-React%20%7C%20Vite%20%7C%20PHP%20%7C%20Postgres-29b6f6)
-![License](https://img.shields.io/badge/license-MIT-2ecc71)
-```
+- `tasks/todo.md` em cada iteração não trivial;
+- `tasks/lessons.md` para aprendizagem reutilizável;
+- `CHANGELOG.md` em alterações versionáveis;
+- `README.md`, `COMMANDS.md` ou `docs/architecture/` quando instalação, execução, arquitetura ou comandos mudarem;
+- `docs/ai/ops/HANDOFF.md` quando houver continuidade.
 
-Exemplo no topo de um `README.md`:
+## Modelo de Equipa IA
 
-```md
-# WELLS_OS
+Para tarefas médias, altas, críticas ou multi-papel, usar `docs/ai/ORCHESTRATION.md`, quando existir, para decidir papéis, sequência, handoff, validações e critérios de paragem.
 
-![Stack](https://img.shields.io/badge/stack-React%20%7C%20Vite%20%7C%20PHP%20%7C%20Postgres-29b6f6)
-![License](https://img.shields.io/badge/license-MIT-2ecc71)
+Ativar apenas os papéis relevantes ao risco:
 
-Portfolio e painel operacional do Emanuel Wells.
-```
+| Papel | Responsabilidade |
+|---|---|
+| Product Owner técnico | objetivo, escopo, critérios de aceitação |
+| Arquiteto | limites, módulos, decisões, trade-offs |
+| Frontend Engineer | UI, estado, acessibilidade, performance, integração API |
+| Backend Engineer | domínio, API, validação, erros, logs, segurança |
+| Database Engineer | schema, migrações, integridade, performance, rollback |
+| QA Engineer | testes, regressões, edge cases, validação manual |
+| Security Reviewer | segredos, auth, autorização, exposição de dados |
+| DevOps Engineer | build, Docker, CI/CD, ambiente, deploy, rollback |
+| Technical Writer | README, docs, changelog, handoff |
+| Repo Maintainer | estrutura, limpeza, naming, dependências |
+| Code Reviewer | diff, bugs, simplicidade, regressões |
 
-Os badges devem ser criados com base na stack real do projeto.
+## Refactors
 
-A IA não deve inventar tecnologias, licença, versão, estado de testes, cobertura, build ou CI/CD.
+Refactor estrutural exige plano antes de código.
 
-Se a licença ainda não estiver definida, usar:
+Obrigatório:
 
-```md
-![License](https://img.shields.io/badge/license-A%20confirmar-lightgrey)
-```
+- preservar comportamento;
+- separar por fases;
+- não misturar com feature;
+- validar por fase;
+- manter rollback claro;
+- atualizar imports, testes e documentação;
+- parar se validações falharem sem causa entendida.
 
-Se o projeto ainda estiver em desenvolvimento inicial, pode ser usado:
+Usar `docs/ai/policies/SAFE_REFACTOR_POLICY.md` e `docs/ai/skills/safe-refactor/SKILL.md` quando aplicável.
 
-```md
-![Status](https://img.shields.io/badge/status-em%20desenvolvimento-f39c12)
-```
+## Qualidade
 
-## Regras Para Badges No `README.md`
-
-- Usar badges apenas quando acrescentarem leitura rápida ao `README.md`.
-- Colocar os badges no topo do documento.
-- Manter nomes curtos, claros e legíveis.
-- Usar apenas tecnologias confirmadas no projeto.
-- Não usar badges falsos de build, testes, cobertura, versão ou CI/CD sem validação real.
-- Preferir badges simples, limpos e consistentes.
-- Garantir que os badges não substituem a documentação textual.
-- Atualizar os badges quando a stack, licença, estado ou versão do projeto mudarem.
-
-## Dockerização Quando Fizer Sentido
-
-Sempre que fizer sentido para o projeto, a IA deve propor ou implementar uma configuração Docker simples, segura e profissional.
-
-Docker deve ser considerado especialmente quando o projeto tiver:
-
-- backend ou API;
-- base de dados;
-- workers, filas ou serviços auxiliares;
-- dependências difíceis de instalar manualmente;
-- necessidade de ambiente reprodutível;
-- deploy em VPS, Coolify, Portainer, CI/CD ou ambiente semelhante;
-- diferença relevante entre ambiente local e produção.
-
-A Dockerização deve ser simples e adequada à escala do projeto.
-
-Não criar Docker, Docker Compose ou infraestrutura adicional se isso apenas aumentar complexidade sem benefício claro.
-
-## Regras Para Docker
-
-Quando Docker for usado, devem existir, sempre que aplicável:
-
-- `Dockerfile` claro e minimalista;
-- `docker-compose.yml` para ambiente local;
-- `.dockerignore`;
-- `.env.example`;
-- instruções no `README.md`;
-- documentação das portas, volumes e variáveis de ambiente;
-- comandos de arranque, paragem, rebuild e logs;
-- separação clara entre ambiente local, desenvolvimento e produção quando aplicável.
-
-A IA não deve colocar segredos reais em imagens, ficheiros Docker, `docker-compose.yml`, `.env.example`, documentação ou repositório.
-
-## Estrutura Simples E Profissional Do Repositório
-
-A IA deve manter a estrutura do repositório simples, previsível e profissional.
-
-A estrutura deve favorecer:
-
-- leitura rápida;
-- separação clara de responsabilidades;
-- onboarding fácil;
-- manutenção futura;
-- compatibilidade com Docker, CI/CD e deploy;
-- facilidade para outras IAs entenderem o projeto.
+Preferir código simples, explícito, modular, testável e documentado onde importa.
 
 Evitar:
 
-- pastas sem propósito claro;
-- nomes vagos como `coisas`, `misc`, `old`, `teste_final`, `novo2`;
-- duplicação desnecessária;
-- ficheiros soltos sem organização;
-- estruturas demasiado complexas para projetos simples;
-- refactors grandes sem necessidade.
+- ficheiros gigantes;
+- abstrações sem uso real;
+- duplicação de regras entre ferramentas;
+- dependências sem retorno claro;
+- comentários que apenas repetem o código;
+- alterações cosméticas misturadas com lógica.
 
-## Estrutura Recomendada Do Repositório
+## Segurança
 
-A estrutura deve ser adaptada ao projeto, mas seguir um padrão simples quando aplicável.
+- Segredos reais nunca entram no Git.
+- Logs não devem expor tokens, passwords, cookies, chaves privadas ou dados pessoais desnecessários.
+- Produção, SSH, permissões, backups e migrações destrutivas exigem cuidado proporcional e confirmação quando houver risco irreversível.
 
-Para projetos simples:
+## Resposta Final do Agente
 
-```text
-projeto/
-├── AGENTS.md
-├── PROJECT_CONTEXT.md
-├── README.md
-├── CHANGELOG.md
-├── CHANGELOG_POLICY.md
-├── .env.example
-├── .gitignore
-├── .dockerignore
-├── docker-compose.yml
-│
-├── tasks/
-│   ├── todo.md
-│   └── lessons.md
-│
-├── docs/
-│   └── ...
-│
-├── src/
-│   └── ...
-│
-├── tests/
-│   └── ...
-│
-└── scripts/
-    └── ...
-```
+Para trabalho executado, responder com:
 
-Para projetos full-stack:
-
-```text
-projeto/
-├── backend/
-├── frontend/
-├── database/
-├── docs/
-├── scripts/
-├── tests/
-├── tasks/
-├── docker-compose.yml
-├── .env.example
-├── README.md
-├── PROJECT_CONTEXT.md
-├── CHANGELOG.md
-├── CHANGELOG_POLICY.md
-└── AGENTS.md
-```
-
-## Critério De Simplicidade Estrutural
-
-Antes de criar novas pastas, serviços, containers ou abstrações, a IA deve perguntar:
-
-- isto reduz complexidade ou aumenta?
-- isto ajuda no deploy, testes ou manutenção?
-- isto é adequado à escala atual do projeto?
-- uma pessoa nova conseguiria perceber a estrutura em menos de 5 minutos?
-
-Se a resposta for negativa, manter a solução mais simples.
-
-## Critério De Conclusão Para Documentação
-
-Uma tarefa que altere comportamento, instalação, configuração, comandos, arquitetura, endpoints, scripts, migrations ou fluxos críticos só pode ser considerada concluída se:
-
-- `README.md` estiver criado ou atualizado;
-- a estrutura do repositório estiver simples, coerente e profissional;
-- Docker estiver documentado no `README.md` quando for usado;
-- badges do `README.md` estiverem corretos quando usados;
-- `PROJECT_CONTEXT.md` estiver coerente com o projeto;
-- `CHANGELOG.md` tiver entrada versionada quando aplicável;
-- os comentários e documentação técnica estiverem em português europeu correto;
-- a documentação não contradisser o código;
-- a resposta final indicar claramente se o `README.md` foi atualizado ou se não foi necessário.
-
-## Changelog Obrigatório
-
-Cada projeto deve ter um `CHANGELOG.md` versionado na raiz.
-
-A política completa fica em `CHANGELOG_POLICY.md` e é obrigatória para qualquer IA que trabalhe no repositório.
-
-Regras mínimas:
-
-- Atualizar `CHANGELOG.md` automaticamente sempre que houver alteração versionável.
-- Usar SemVer: `MAJOR.MINOR.PATCH`.
-- Inserir entradas novas no topo do ficheiro.
-- Nunca apagar histórico antigo.
-- Registar motivo, impacto, ficheiros alterados, testes, validação, refs e diff resumido.
-- Não entregar trabalho como concluído se houve alteração versionável sem nova entrada no changelog.
-- Se não houve alteração versionável, declarar isso na resposta final.
-
-## Orquestração do Fluxo de Trabalho
-
-### 1. Modo de Planeamento por Defeito
-
-- Entrar em modo de planeamento para QUALQUER tarefa não trivial, ou seja, tarefas com 3 ou mais passos, decisões de arquitetura ou alterações com impacto transversal.
-- Se algo correr mal, PARAR e replanear imediatamente — não continuar a forçar uma abordagem errada.
-- Usar o modo de planeamento para passos de verificação, não apenas para construir.
-- Escrever especificações detalhadas à partida para reduzir a ambiguidade.
-
-### 2. Estratégia de Subagentes
-
-- Usar subagentes de forma liberal para manter limpa a janela de contexto principal.
-- Delegar investigação, exploração e análise paralela em subagentes.
-- Para problemas complexos, aplicar mais capacidade computacional através de subagentes.
-- Uma linha de abordagem por subagente para uma execução focada.
-
-### 3. Ciclo de Autoaperfeiçoamento
-
-- Após QUALQUER correção do utilizador, atualizar `tasks/lessons.md` com o padrão identificado.
-- Escrever regras para prevenir o mesmo erro no futuro.
-- Iterar sobre estas lições até a taxa de erros descer.
-- Rever as lições no início da sessão para o projeto relevante.
-
-### 4. Verificação Antes De Concluir
-
-- Nunca marcar uma tarefa como concluída sem provar que funciona.
-- Comparar o comportamento entre a `main` e as alterações atuais quando for relevante.
-- Perguntar: “Um Staff Engineer aprovaria isto?”
-- Executar testes, verificar logs e demonstrar correção.
-
-### 5. Exigir Elegância De Forma Equilibrada
-
-- Para alterações não triviais, pausar e perguntar: “há uma forma mais elegante?”
-- Se uma correção parecer improvisada, implementar a solução elegante com base no conhecimento atual.
-- Ignorar isto para correções simples e óbvias — não complicar em excesso.
-- Questionar o próprio trabalho antes de o apresentar.
-
-### 6. Correção Autónoma De Bugs
-
-- Quando receber um relatório de bug, corrigir o problema. Não pedir acompanhamento passo a passo ao utilizador.
-- Identificar logs, erros e testes a falhar — depois resolver.
-- Não exigir troca de contexto ao utilizador quando o repositório tiver informação suficiente.
-- Corrigir testes de CI a falhar sem que seja necessário explicar como.
-
-## Gestão De Tarefas
-
-1. **Planear Primeiro**: escrever o plano em `tasks/todo.md` com itens verificáveis.
-2. **Verificar O Plano**: confirmar o plano antes de iniciar a implementação.
-3. **Acompanhar O Progresso**: marcar itens como concluídos à medida que a execução avança.
-4. **Explicar Alterações**: registar resumo de alto nível em cada passo relevante.
-5. **Documentar Resultados**: adicionar uma secção de revisão a `tasks/todo.md`.
-6. **Capturar Lições**: atualizar `tasks/lessons.md` após correções, erros ou feedback do utilizador.
-
-## Princípios Fundamentais
-
-- **Simplicidade Primeiro**: tornar cada alteração tão simples quanto possível. Impactar o mínimo de código.
-- **Sem Preguiça**: encontrar causas raiz. Sem correções temporárias. Padrões de programador sénior.
-- **Impacto Mínimo**: as alterações devem tocar apenas no que é necessário. Evitar introduzir bugs.
-- **Documentação Clara**: todo o código relevante deve estar documentado em português europeu correto, com acentuação e sem ambiguidade.
-- **README Profissional**: todo o projeto deve ter um `README.md` claro, útil, atualizado e visualmente apelativo, ao nível dos melhores repositórios.
-- **Docker Adequado**: Docker deve ser usado quando trouxer reprodutibilidade, facilidade de deploy ou isolamento útil, sem criar complexidade desnecessária.
-- **Estrutura Profissional**: o repositório deve manter uma organização simples, previsível, limpa e fácil de compreender.
-- **Badges Reais**: os badges do `README.md` devem refletir apenas informação confirmada sobre stack, licença, versão, estado, testes ou CI/CD.
+- resumo objetivo;
+- ficheiros principais alterados;
+- validações executadas e resultado;
+- limitações conhecidas;
+- próximos passos, apenas se forem necessários.
