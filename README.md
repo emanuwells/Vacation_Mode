@@ -2,7 +2,7 @@
 
 ![Stack](https://img.shields.io/badge/stack-Google%20Apps%20Script%20%7C%20Google%20Sheets%20%7C%20Google%20Calendar-4285f4)
 ![Runtime](https://img.shields.io/badge/runtime-Google%20Apps%20Script-34a853)
-![Version](https://img.shields.io/badge/version-1.4.0-f39c12)
+![Version](https://img.shields.io/badge/version-1.4.1-f39c12)
 ![License](https://img.shields.io/badge/license-MIT-2ecc71)
 
 Script Google Apps Script para gerir férias numa folha de cálculo anual e sincronizar períodos com o Google Calendar.
@@ -29,6 +29,8 @@ Script Google Apps Script para gerir férias numa folha de cálculo anual e sinc
 
 O projeto distribui um único ficheiro (`Vacation_Mode.js`) para colar no editor do Google Apps Script associado a uma folha de cálculo com calendário anual.
 
+A grelha anual baseia-se no calendário em Excel com feriados nacionais portugueses disponibilizado em [Economia e Finanças](https://economiafinancas.com), na secção de utilitários/calendário.
+
 O fluxo principal:
 
 1. O utilizador pinta dias de férias e aniversário na grelha.
@@ -42,7 +44,7 @@ O fluxo principal:
 | Contadores | Cálculo de férias gozadas, planeadas, totais, restantes e dia de aniversário. |
 | Multi-folha | Suporte a várias folhas anuais no mesmo ficheiro. |
 | Google Calendar | Criação de eventos com título configurável e marcador interno. |
-| Agrupamento | Dias consecutivos são reunidos num único evento. |
+| Agrupamento | Dias úteis seguidos separados apenas por fins de semana são reunidos num único evento, com contagem em dias de calendário. |
 | Sincronização ao colorir | Trigger `onChange` reage a alterações de cor e formato na folha. |
 | Automação | Trigger temporal opcional a cada 5 minutos. |
 | Diagnóstico | Função para validar cores reconhecidas na grelha. |

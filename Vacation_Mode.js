@@ -1,6 +1,6 @@
 /**
  * SISTEMA DE GESTÃO DE FÉRIAS
- * Versão: 1.4.0
+ * Versão: 1.4.1
  * Data: 2026-06-26
  * 
  * Autor: Emanuel Ferreira (@emanuwells)
@@ -418,7 +418,7 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
         const dataFim = new Date(bloco.fim);
         dataFim.setDate(dataFim.getDate() + 1); // A Calendar API precisa do dia seguinte para eventos de dia inteiro.
 
-        const numDias = bloco.dias.length;
+        const numDias = contarDiasCalendario(bloco.inicio, bloco.fim);
         const titulo = numDias === 1
           ? CONFIG.CALENDARIO.TITULO_EVENTO
           : CONFIG.CALENDARIO.TITULO_EVENTO + ' (' + numDias + ' dias)';
@@ -517,7 +517,38 @@ function obterDatasFerias(sheet, ano) {
 }
 
 /**
+ * Indica se todos os dias entre duas datas (exclusivo) são sábado ou domingo.
+ */
+function intervaloApenasFinsDeSemana(dataInicio, dataFim) {
+  const diaAtual = new Date(dataInicio);
+  diaAtual.setHours(0, 0, 0, 0);
+  diaAtual.setDate(diaAtual.getDate() + 1);
+
+  const limite = new Date(dataFim);
+  limite.setHours(0, 0, 0, 0);
+
+  while (diaAtual < limite) {
+    const diaSemana = diaAtual.getDay();
+    if (diaSemana !== 0 && diaSemana !== 6) {
+      return false;
+    }
+    diaAtual.setDate(diaAtual.getDate() + 1);
+  }
+
+  return true;
+}
+
+/**
+ * Conta dias de calendário entre duas datas, inclusive.
+ */
+function contarDiasCalendario(inicio, fim) {
+  const diferenca = Math.round((fim - inicio) / (1000 * 60 * 60 * 24));
+  return diferenca + 1;
+}
+
+/**
  * Agrupa datas consecutivas em blocos para criar eventos de dia inteiro.
+ * Dias úteis separados apenas por fins de semana não pintados são fundidos num único bloco.
  */
 function agruparDatasConsecutivas(datas) {
   if (datas.length === 0) {
@@ -535,20 +566,20 @@ function agruparDatasConsecutivas(datas) {
     const dataAtual = datas[i];
     const dataAnterior = datas[i - 1];
 
-    // Calcular diferença em dias.
     const diferencaDias = Math.round((dataAtual - dataAnterior) / (1000 * 60 * 60 * 24));
+    const consecutivo = diferencaDias === 1;
+    const separadoApenasPorFimDeSemana = diferencaDias > 1 && intervaloApenasFinsDeSemana(dataAnterior, dataAtual);
 
     Logger.log('Comparando ' + formatarData(dataAnterior) + ' com ' + formatarData(dataAtual) + ': diferenca = ' + diferencaDias + ' dia(s)');
 
-    if (diferencaDias === 1) {
-      // Dias consecutivos: adicionar ao bloco atual.
+    if (consecutivo || separadoApenasPorFimDeSemana) {
       blocoAtual.fim = dataAtual;
       blocoAtual.dias.push(dataAtual);
-      Logger.log('Consecutivo! Bloco agora tem ' + blocoAtual.dias.length + ' dia(s)');
+      Logger.log('Bloco unido! Agora vai de ' + formatarData(blocoAtual.inicio) + ' a ' + formatarData(blocoAtual.fim) +
+        ' (' + contarDiasCalendario(blocoAtual.inicio, blocoAtual.fim) + ' dias de calendário)');
     } else {
-      // Não consecutivo: fechar bloco atual e iniciar novo.
       blocos.push(blocoAtual);
-      Logger.log('Não consecutivo! A fechar bloco de ' + blocoAtual.dias.length + ' dia(s)');
+      Logger.log('Não consecutivo! A fechar bloco de ' + contarDiasCalendario(blocoAtual.inicio, blocoAtual.fim) + ' dia(s)');
 
       blocoAtual = {
         inicio: dataAtual,
@@ -558,7 +589,6 @@ function agruparDatasConsecutivas(datas) {
     }
   }
 
-  // Adicionar último bloco.
   blocos.push(blocoAtual);
 
   return blocos;

@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.4.1] - 2026-06-26T14:00:00+01:00
+
+### Agrupamento de férias com fins de semana
+
+**Motivo:**
+- Períodos de férias pintados em semanas seguidas apareciam no Google Calendar como blocos separados (ex.: dois eventos de 5 dias) porque os fins de semana não são pintados na grelha base do [Economia e Finanças](https://economiafinancas.com).
+
+**Impacto:**
+- Semanas consecutivas de férias passam a gerar um único evento com a duração total em dias de calendário (ex.: 14 dias em vez de 5+5).
+- O README passa a referenciar a origem do calendário com feriados.
+
+**Alterações:**
+- `Vacation_Mode.js`: funções `intervaloApenasFinsDeSemana` e `contarDiasCalendario`; agrupamento alargado.
+- `README.md`: referência ao calendário Excel do Economia e Finanças.
+- `VERSION`: atualizado para `1.4.1`.
+
+**Validação:**
+- `node --check Vacation_Mode.js`
+- Revisão lógica de agrupamento com cenários segunda–sexta + segunda–sexta.
+
+**Diff:**
+- Fins de semana entre blocos de dias pintados deixam de partir o período no Calendar.
+
+---
+
 ## [1.4.0] - 2026-06-26T12:00:00+01:00
 
 ### Sincronização ao colorir e alinhamento com template
