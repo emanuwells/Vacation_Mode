@@ -1,7 +1,7 @@
 /**
  * SISTEMA DE GESTÃO DE FÉRIAS
- * Versão: 1.4.1
- * Data: 2026-06-26
+ * Versão: 1.4.4
+ * Data: 2026-07-26
  * 
  * Autor: Emanuel Ferreira (@emanuwells)
  * 

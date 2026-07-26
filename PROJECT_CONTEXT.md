@@ -8,8 +8,9 @@ Contexto técnico vivo do projeto.
 | --- | --- |
 | Nome | Vacation Mode |
 | Descrição | Gestão de férias em Google Sheets com sincronização para Google Calendar |
-| Versão atual | 1.4.0 |
+| Versão atual | 1.4.4 |
 | Estado | manutenção |
+| Sistema IA | WELLS Agent Runtime 0.5.0 (`.agents/`) |
 
 ## Domínio
 
@@ -33,13 +34,17 @@ Contexto técnico vivo do projeto.
 | --- | --- |
 | `Vacation_Mode.js` | Script principal |
 | `README.md` | Documentação de utilização |
-| `AGENTS.md` | Contrato operacional para IAs |
 | `COMMANDS.md` | Comandos reais de validação |
 | `CHANGELOG.md` | Histórico versionado |
-| `docs/ai/policies/CHANGELOG_POLICY.md` | Política de changelog |
 | `PROJECT_CONTEXT.md` | Este ficheiro |
-| `tasks/` | Plano e lições aprendidas |
-| `.github/SECURITY.md` | Política de segurança |
+| `CONTRIBUTING.md` | Fluxo de contribuição |
+| `SECURITY.md` | Política de segurança na raiz |
+| `.github/SECURITY.md` | Política de segurança no GitHub |
+| `.agents/AGENTS.md` | Contrato operacional para IAs (entrada única) |
+| `.agents/state/` | TODO, HANDOFF, LESSONS, DECISIONS, EVIDENCE |
+| `.agents/policies/` | Políticas normativas (incl. changelog) |
+| `docs/ROOT_STRUCTURE.md` | Estrutura da raiz do projeto |
+| `scripts/` | Utilitários Git locais |
 
 ## Fluxos críticos
 
@@ -61,6 +66,12 @@ Ver `COMMANDS.md`. Validação local principal:
 node --check Vacation_Mode.js
 ```
 
+Validação do runtime WELLS:
+
+```bash
+node .agents/tools/validate-project.mjs
+```
+
 ## Política de segredos
 
 Não versionar credenciais, `.clasp.json` nem `appsscript.json`.
@@ -70,6 +81,7 @@ Não versionar credenciais, `.clasp.json` nem `appsscript.json`.
 - Documentação alinhada com `Vacation_Mode.js`.
 - `CHANGELOG.md` e `VERSION` atualizados em alterações versionáveis.
 - Português europeu com acentuação correta.
+- Entrada de agentes apenas via `.agents/AGENTS.md`.
 
 ## Decisões técnicas
 
@@ -78,6 +90,7 @@ Não versionar credenciais, `.clasp.json` nem `appsscript.json`.
 - `onChange` usa handler dedicado `onAlteracaoPlanilha` para evitar loops quando o script atualiza contadores.
 - `PropertiesService` suprime reentrância durante escrita do script.
 - Deteção de folhas alargada para nomes como `Calendário de férias`.
+- Sistema de agentes migrado para WELLS 0.5.0 em `.agents/`.
 
 ## Riscos
 
@@ -91,3 +104,4 @@ Não versionar credenciais, `.clasp.json` nem `appsscript.json`.
 
 - Não existe pipeline CI/CD confirmado.
 - Não existe `docs/architecture/` completo; não é necessário para a escala atual do projeto.
+- Produção (Apps Script) atualiza-se por cópia manual de `Vacation_Mode.js`.

@@ -2,7 +2,7 @@
 
 ![Stack](https://img.shields.io/badge/stack-Google%20Apps%20Script%20%7C%20Google%20Sheets%20%7C%20Google%20Calendar-4285f4)
 ![Runtime](https://img.shields.io/badge/runtime-Google%20Apps%20Script-34a853)
-![Version](https://img.shields.io/badge/version-1.4.1-f39c12)
+![Version](https://img.shields.io/badge/version-1.4.4-f39c12)
 ![License](https://img.shields.io/badge/license-MIT-2ecc71)
 
 Script Google Apps Script para gerir férias numa folha de cálculo anual e sincronizar períodos com o Google Calendar.
@@ -173,9 +173,11 @@ Ver também [`.github/SECURITY.md`](.github/SECURITY.md).
 ## Manutenção
 
 - Histórico: [`CHANGELOG.md`](CHANGELOG.md)
-- Política de versionamento: [`docs/ai/policies/CHANGELOG_POLICY.md`](docs/ai/policies/CHANGELOG_POLICY.md)
+- Política de versionamento: [`.agents/policies/CHANGELOG_POLICY.md`](.agents/policies/CHANGELOG_POLICY.md)
 - Contexto técnico: [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md)
 - Comandos: [`COMMANDS.md`](COMMANDS.md)
+- Contrato de agentes: [`.agents/AGENTS.md`](.agents/AGENTS.md)
+
 
 ## Licença
 

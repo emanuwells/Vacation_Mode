@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.4.4] - 2026-07-26T23:09:45+01:00
+
+### Migração para WELLS Agent Runtime 0.5.0
+
+**Motivo:**
+- Unificar o contrato de agentes em `.agents/AGENTS.md` e eliminar caminhos legados (`AGENTS.md` na raiz, `tasks/`, `docs/ai/`, `tools/ai-adapters/`).
+
+**Impacto:**
+- Entrada única de IA em `.agents/AGENTS.md` (toolkit 0.5.0).
+- Estado operacional em `.agents/state/`; políticas em `.agents/policies/`.
+- Documentação do produto alinhada com a nova estrutura; lógica do script inalterada.
+
+**Alterações:**
+- Adicionado `.agents/` com runtime WELLS 0.5.0 (`manifest.json`, `toolkit-lock.json`).
+- Removidos `AGENTS.md` (raiz), `tasks/`, `docs/ai/`, `tools/ai-adapters/`.
+- Adicionados `CONTRIBUTING.md` e `SECURITY.md` na raiz.
+- `README.md`, `PROJECT_CONTEXT.md`, `COMMANDS.md`, `docs/ROOT_STRUCTURE.md`: caminhos e versão atualizados.
+- `Vacation_Mode.js`, `VERSION`: cabeçalho e versão `1.4.4`.
+
+**Validação:**
+- `node --check Vacation_Mode.js`
+- `node .agents/tools/validate-project.mjs` → `ok: true`, versão `0.5.0`
+
+**Diff:**
+- Reorganização estrutural de agentes/docs; sem alteração funcional nos fluxos Sheets/Calendar.
+
+---
+
 ## [1.4.3] - 2026-06-26T16:00:00+01:00
 
 ### Alinhamento com estrutura do template (raiz limpa)
