@@ -1,0 +1,9 @@
+{
+  "name": "wells-runtime",
+  "description": "Integra routing, output profiles, segurança, knowledge graph, higiene determinística e hooks WELLS no Claude Code sem ficheiros específicos no projeto.",
+  "version": "1.2.0",
+  "author": {
+    "name": "Emanuel Wells"
+  },
+  "license": "SEE LICENSE IN PROJECT"
+}
