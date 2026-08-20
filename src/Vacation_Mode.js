@@ -1,6 +1,6 @@
 /**
  * SISTEMA DE GESTÃO DE FÉRIAS
- * Versão: 1.5.0
+ * Versão: 1.5.1
  * Data: 2026-08-20
  *
  * Autor: Emanuel Ferreira (@emanuwells)
@@ -12,6 +12,8 @@
  * - Sincronização com Google Calendar por diferença (cria/atualiza/remove só o que mudou),
  *   com agrupamento de dias consecutivos, debounce ao pintar e recuperação automática de
  *   quota esgotada do Calendar (mesmo padrão do projeto irmão Luna Sheet).
+ * - Cada bloco de férias sincroniza de forma isolada: um evento com problema fica
+ *   registado como falha, sem abortar a sincronização dos restantes blocos.
  * - Atualização automática via trigger diário + onChange.
  * - Menu personalizado.
  *
@@ -80,6 +82,9 @@ const HANDLERS = {
   alteracaoFolha: 'onAlteracaoPlanilha',
   calendarPendente: 'sincronizarCalendarPendente'
 };
+
+/** Mensagem exata que o Google devolve quando a quota diária do Calendar esgota. */
+const REGEX_QUOTA_CALENDAR = /Service invoked too many times(?: for one day)?:\s*calendar/i;
 
 /**
  * Deteta o ano da folha pelo nome (ex.: "Calendário 2025", "Calendario 2026").
@@ -505,7 +510,8 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
     const resultado = sincronizarBlocosComDiferenca(calendario, eventosDesejados, eventosExistentes);
 
     Logger.log('Sincronização concluída (' + sheet.getName() + '): ' + resultado.criados + ' criado(s), ' +
-      resultado.atualizados + ' atualizado(s), ' + resultado.removidos + ' removido(s).');
+      resultado.atualizados + ' atualizado(s), ' + resultado.removidos + ' removido(s), ' +
+      resultado.falhados + ' falhado(s).');
 
     if (resultado.pendente) {
       const agendada = agendarTriggerUnico(HANDLERS.calendarPendente, CONFIG.SYNC.EDIT_SYNC_DELAY_MS);
@@ -513,20 +519,21 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
     }
 
     if (!silencioso) {
-      if (resultado.criados === 0 && resultado.atualizados === 0 && resultado.removidos === 0) {
+      if (resultado.criados === 0 && resultado.atualizados === 0 && resultado.removidos === 0 && resultado.falhados === 0) {
         mostrarNotificacao(sheet.getName() + ': Calendar já estava atualizado (sem alterações).', 'Sincronização completa', 3);
       } else {
         const partes = [];
         if (resultado.criados) partes.push(resultado.criados + ' criado(s)');
         if (resultado.atualizados) partes.push(resultado.atualizados + ' atualizado(s)');
         if (resultado.removidos) partes.push(resultado.removidos + ' removido(s)');
+        if (resultado.falhados) partes.push(resultado.falhados + ' falhado(s) — ver log');
         mostrarNotificacao(sheet.getName() + ': ' + partes.join(', ') + ' no Google Calendar.', 'Sincronização completa', 5);
       }
     }
 
   } catch (erro) {
     const mensagem = erro && erro.message ? erro.message : String(erro);
-    if (/Service invoked too many times(?: for one day)?:\s*calendar/i.test(mensagem)) {
+    if (REGEX_QUOTA_CALENDAR.test(mensagem)) {
       const proxima = new Date(Date.now() + CONFIG.SYNC.QUOTA_RETRY_DELAY_MS);
       props.setProperty(PROPRIEDADES.quotaRetryAt, String(proxima.getTime()));
       const agendada = agendarTriggerUnico(HANDLERS.calendarPendente, CONFIG.SYNC.QUOTA_RETRY_DELAY_MS);
@@ -782,6 +789,10 @@ function obterEventosGeradosNoAno(calendario, ano) {
  * correspondem a nenhum bloco pintado. Substitui a estratégia anterior de apagar todos
  * os eventos do ano e recriá-los do zero a cada sincronização, que gastava a quota diária
  * do Calendar sem necessidade sempre que nada tinha realmente mudado.
+ * Cada bloco é isolado num try/catch: um erro num bloco (ex. um evento antigo inválido)
+ * fica registado e contado em `falhados`, mas não aborta os restantes blocos da mesma
+ * sincronização. Um erro de quota é a única exceção — é propagado ao chamador, que trata
+ * o bloqueio e a retentativa (não faz sentido continuar a tentar quando a quota esgotou).
  * Aplica CONFIG.SYNC.MAX_EVENT_MUTATIONS_PER_RUN como limite defensivo por execução;
  * devolve `pendente: true` se o limite foi atingido, para o chamador agendar uma continuação.
  */
@@ -797,58 +808,77 @@ function sincronizarBlocosComDiferenca(calendario, eventosDesejados, eventosExis
   let criados = 0;
   let atualizados = 0;
   let removidos = 0;
+  let falhados = 0;
   let mutacoes = 0;
   const usados = new Set();
   const limiteAtingido = () => mutacoes >= CONFIG.SYNC.MAX_EVENT_MUTATIONS_PER_RUN;
+
+  function registarFalha(contexto, erro) {
+    const mensagem = erro && erro.message ? erro.message : String(erro);
+    if (REGEX_QUOTA_CALENDAR.test(mensagem)) {
+      throw erro; // Quota esgotada: não continuar a tentar; o chamador trata o backoff.
+    }
+    falhados++;
+    mutacoes++;
+    Logger.log('Erro ao sincronizar bloco (' + contexto + '): ' + mensagem);
+  }
 
   eventosDesejados.forEach(desejado => {
     if (limiteAtingido()) return;
     const existente = porChave.get(desejado.chave);
 
-    if (!existente) {
-      calendario.createAllDayEvent(desejado.titulo, desejado.inicio, desejado.fimApi, { description: desejado.descricao });
-      criados++;
-      mutacoes++;
-      return;
-    }
+    try {
+      if (!existente) {
+        calendario.createAllDayEvent(desejado.titulo, desejado.inicio, desejado.fimApi, { description: desejado.descricao });
+        criados++;
+        mutacoes++;
+        return;
+      }
 
-    usados.add(existente);
+      usados.add(existente);
 
-    // Eventos de dia inteiro não têm um "setter" de intervalo multi-dia no CalendarApp;
-    // quando a duração do bloco muda, o evento é recriado, mas só esse bloco (não o ano inteiro).
-    if (existente.getEndTime().getTime() !== desejado.fimApi.getTime()) {
-      existente.deleteEvent();
-      calendario.createAllDayEvent(desejado.titulo, desejado.inicio, desejado.fimApi, { description: desejado.descricao });
-      atualizados++;
-      mutacoes++;
-      return;
-    }
+      // Eventos de dia inteiro não têm um "setter" de intervalo multi-dia no CalendarApp;
+      // quando a duração do bloco muda, o evento é recriado, mas só esse bloco (não o ano inteiro).
+      if (existente.getEndTime().getTime() !== desejado.fimApi.getTime()) {
+        existente.deleteEvent();
+        calendario.createAllDayEvent(desejado.titulo, desejado.inicio, desejado.fimApi, { description: desejado.descricao });
+        atualizados++;
+        mutacoes++;
+        return;
+      }
 
-    let alterado = false;
-    if (existente.getTitle() !== desejado.titulo) {
-      existente.setTitle(desejado.titulo);
-      alterado = true;
-    }
-    if (existente.getDescription() !== desejado.descricao) {
-      existente.setDescription(desejado.descricao);
-      alterado = true;
-    }
-    if (alterado) {
-      atualizados++;
-      mutacoes++;
+      let alterado = false;
+      if (existente.getTitle() !== desejado.titulo) {
+        existente.setTitle(desejado.titulo);
+        alterado = true;
+      }
+      if (existente.getDescription() !== desejado.descricao) {
+        existente.setDescription(desejado.descricao);
+        alterado = true;
+      }
+      if (alterado) {
+        atualizados++;
+        mutacoes++;
+      }
+    } catch (erroBloco) {
+      registarFalha(formatarData(desejado.inicio), erroBloco);
     }
   });
 
   eventosExistentes.forEach(evento => {
     if (limiteAtingido()) return;
     if (!usados.has(evento)) {
-      evento.deleteEvent();
-      removidos++;
-      mutacoes++;
+      try {
+        evento.deleteEvent();
+        removidos++;
+        mutacoes++;
+      } catch (erroRemocao) {
+        registarFalha('remoção de evento antigo', erroRemocao);
+      }
     }
   });
 
-  return { criados, atualizados, removidos, pendente: limiteAtingido() };
+  return { criados, atualizados, removidos, falhados, pendente: limiteAtingido() };
 }
 
 // GESTÃO DE TRIGGERS (AUTOMAÇÃO)

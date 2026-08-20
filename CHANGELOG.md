@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.5.1] - 2026-08-20T12:00:00+01:00
+
+### Isolamento de erros por bloco na sincronização do Calendar; script movido para `src/`
+
+**Motivo:**
+- Depois de ativar a sincronização automática (1.5.0) e correr "SINCRONIZAR TUDO" na folha real, a sincronização com o Calendar continuou a falhar. Revisão do código encontrou uma regressão introduzida em 1.5.0: `sincronizarBlocosComDiferenca` já não tinha o isolamento por bloco que a versão anterior tinha (cada bloco era criado dentro do seu próprio `try/catch`); um erro num único bloco — por exemplo, um evento antigo já inválido, criado por uma versão anterior do script — abortava a sincronização inteira da folha, incluindo blocos perfeitamente válidos, e mostrava só "Erro ao sincronizar. Verifica o log.", sem indicar qual bloco falhou.
+- Pedido de organização: mover `Vacation_Mode.js` para `src/`, para limpar a raiz do repositório.
+
+**Impacto:**
+- Cada bloco de férias volta a sincronizar isoladamente: um erro num bloco fica registado e contado (`falhados`), mas os restantes blocos da mesma folha continuam a ser criados/atualizados/removidos normalmente.
+- Um erro de quota do Calendar continua a interromper de imediato (não faz sentido continuar a tentar quando a quota já esgotou) — é a única exceção propagada ao chamador, que trata o bloqueio e a retentativa automática.
+- A notificação de "Sincronizar com Calendar" passa a incluir também os blocos falhados, quando existirem, com indicação para consultar o log.
+- `src/Vacation_Mode.js` substitui `Vacation_Mode.js` na raiz; a raiz do repositório fica limpa (só documentação, licença e configuração). A instalação no Apps Script passa a copiar o conteúdo de `src/Vacation_Mode.js`.
+
+**Alterações:**
+- `Vacation_Mode.js` → `src/Vacation_Mode.js` (movido via `git mv`, sem alteração do nome do ficheiro).
+- `src/Vacation_Mode.js`: `REGEX_QUOTA_CALENDAR` (constante partilhada); `sincronizarBlocosComDiferenca` volta a isolar cada mutação num `try/catch`, com `registarFalha()` a distinguir um erro de quota (propagado) de qualquer outro erro (registado e contado em `falhados`, sem abortar); mensagens de log e de notificação atualizadas para refletir blocos falhados.
+- `tests/triggers.test.js`, `tests/calendar.test.js`: caminho do script atualizado para `src/Vacation_Mode.js`; novo cenário em `calendar.test.js` cobre o isolamento por bloco (um erro pontual não aborta os restantes; um erro de quota interrompe de imediato).
+- `README.md`, `PROJECT_CONTEXT.md`, `COMMANDS.md`, `docs/ROOT_STRUCTURE.md`: caminhos atualizados para `src/Vacation_Mode.js`; estrutura do repositório e política da raiz refletem `src/` e `tests/`.
+- `VERSION`: `1.5.1`.
+
+**Validação:**
+- `node --check src/Vacation_Mode.js`
+- `node tests/triggers.test.js` → 5/5 OK
+- `node tests/calendar.test.js` → 7/7 OK (inclui os 2 cenários novos de isolamento de erro por bloco)
+- `node .agents/tools/validate-project.mjs` → `ok: true`
+
+**Diff:**
+- Menus, células de configuração, cores detetadas e formato dos eventos mantêm-se inalterados. A sincronização por diferença introduzida em 1.5.0 mantém-se; só a resiliência por bloco foi restaurada e o ficheiro principal mudou de localização.
+
+---
+
 ## [1.5.0] - 2026-08-20T00:00:00+01:00
 
 ### Sincronização do Calendar por diferença, debounce ao pintar e recuperação de quota

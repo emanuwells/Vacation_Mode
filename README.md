@@ -2,7 +2,7 @@
 
 ![Stack](https://img.shields.io/badge/stack-Google%20Apps%20Script%20%7C%20Google%20Sheets%20%7C%20Google%20Calendar-4285f4)
 ![Runtime](https://img.shields.io/badge/runtime-Google%20Apps%20Script-34a853)
-![Version](https://img.shields.io/badge/version-1.5.0-f39c12)
+![Version](https://img.shields.io/badge/version-1.5.1-f39c12)
 ![License](https://img.shields.io/badge/license-MIT-2ecc71)
 
 Script Google Apps Script para gerir férias numa folha de cálculo anual e sincronizar períodos com o Google Calendar.
@@ -27,7 +27,7 @@ Script Google Apps Script para gerir férias numa folha de cálculo anual e sinc
 
 ## Visão geral
 
-O projeto distribui um único ficheiro (`Vacation_Mode.js`) para colar no editor do Google Apps Script associado a uma folha de cálculo com calendário anual.
+O projeto distribui um único ficheiro (`src/Vacation_Mode.js`) para colar no editor do Google Apps Script associado a uma folha de cálculo com calendário anual.
 
 A grelha anual baseia-se no calendário em Excel com feriados nacionais portugueses disponibilizado em [Economia e Finanças](https://economiafinancas.com), na secção de utilitários/calendário.
 
@@ -58,7 +58,7 @@ O fluxo principal:
 | Script | Google Apps Script (JavaScript) |
 | Interface | Menu personalizado no Google Sheets |
 | Integração | `SpreadsheetApp`, `CalendarApp`, `ScriptApp`, `LockService`, `PropertiesService` |
-| Distribuição | Cópia manual de `Vacation_Mode.js` |
+| Distribuição | Cópia manual de `src/Vacation_Mode.js` |
 
 ## Requisitos
 
@@ -72,14 +72,14 @@ Não há dependências locais nem processo de build.
 
 1. Abrir a folha de cálculo alvo.
 2. Ir a `Extensões` > `Apps Script`.
-3. Colar o conteúdo de `Vacation_Mode.js`.
+3. Colar o conteúdo de `src/Vacation_Mode.js`.
 4. Guardar o projeto.
 5. Recarregar a folha e confirmar o menu `Gestão de Férias`.
 6. Executar `Ativar Sincronização Automática` se quiser sincronização ao colorir.
 
 ## Configuração
 
-A configuração principal está no objeto `CONFIG`, no topo de `Vacation_Mode.js`.
+A configuração principal está no objeto `CONFIG`, no topo de `src/Vacation_Mode.js`.
 
 | Chave | Valor por omissão | Descrição |
 | --- | --- | --- |
@@ -153,7 +153,7 @@ flowchart LR
 Localmente:
 
 ```bash
-node --check Vacation_Mode.js
+node --check src/Vacation_Mode.js
 node tests/triggers.test.js
 node tests/calendar.test.js
 ```

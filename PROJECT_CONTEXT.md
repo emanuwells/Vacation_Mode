@@ -8,7 +8,7 @@ Contexto técnico vivo do projeto.
 | --- | --- |
 | Nome | Vacation Mode |
 | Descrição | Gestão de férias em Google Sheets com sincronização para Google Calendar |
-| Versão atual | 1.5.0 |
+| Versão atual | 1.5.1 |
 | Estado | manutenção |
 | Sistema IA | WELLS Agent Runtime 0.5.0 (`.agents/`) |
 
@@ -23,7 +23,7 @@ Contexto técnico vivo do projeto.
 
 | Camada | Tecnologia | Observações |
 | --- | --- | --- |
-| Script | Google Apps Script | Ficheiro único `Vacation_Mode.js` |
+| Script | Google Apps Script | Ficheiro único `src/Vacation_Mode.js` |
 | Interface | Google Sheets | Menu `Gestão de Férias` |
 | Persistência | Folha + Calendar | Sem base de dados externa |
 | Distribuição | Git | Cópia manual para o Apps Script |
@@ -32,7 +32,7 @@ Contexto técnico vivo do projeto.
 
 | Caminho | Função |
 | --- | --- |
-| `Vacation_Mode.js` | Script principal |
+| `src/Vacation_Mode.js` | Script principal |
 | `tests/` | Testes locais Node.js (triggers, sincronização por diferença, quota) |
 | `README.md` | Documentação de utilização |
 | `COMMANDS.md` | Comandos reais de validação |
@@ -65,7 +65,7 @@ Contexto técnico vivo do projeto.
 Ver `COMMANDS.md`. Validação local principal:
 
 ```bash
-node --check Vacation_Mode.js
+node --check src/Vacation_Mode.js
 node tests/triggers.test.js
 node tests/calendar.test.js
 ```
@@ -82,7 +82,7 @@ Não versionar credenciais, `.clasp.json` nem `appsscript.json`.
 
 ## Critérios de verificação
 
-- Documentação alinhada com `Vacation_Mode.js`.
+- Documentação alinhada com `src/Vacation_Mode.js`.
 - `CHANGELOG.md` e `VERSION` atualizados em alterações versionáveis.
 - Português europeu com acentuação correta.
 - Entrada de agentes apenas via `.agents/AGENTS.md`.
@@ -113,4 +113,4 @@ Não versionar credenciais, `.clasp.json` nem `appsscript.json`.
 
 - Não existe pipeline CI/CD confirmado.
 - Não existe `docs/architecture/` completo; não é necessário para a escala atual do projeto.
-- Produção (Apps Script) atualiza-se por cópia manual de `Vacation_Mode.js`.
+- Produção (Apps Script) atualiza-se por cópia manual de `src/Vacation_Mode.js`.

@@ -124,7 +124,7 @@ const contexto = {
 };
 
 vm.createContext(contexto);
-const script = fs.readFileSync(path.join(__dirname, '..', 'Vacation_Mode.js'), 'utf8');
+const script = fs.readFileSync(path.join(__dirname, '..', 'src', 'Vacation_Mode.js'), 'utf8');
 vm.runInContext(script, contexto);
 
 // --- instalarTriggerAutomatico: trigger diário (não 5 em 5 minutos) + onChange, e limpa bloqueio de quota. ---

@@ -18,14 +18,19 @@ Estrutura mínima deste repositório, alinhada com o contrato WELLS (`.agents/AG
 ├── scripts/
 │   └── strip-coauthor-msg.ps1
 ├── SECURITY.md
-├── Vacation_Mode.js
+├── src/
+│   └── Vacation_Mode.js
+├── tests/
+│   ├── calendar.test.js
+│   └── triggers.test.js
 └── VERSION
 ```
 
 ## Política
 
-- Ficheiros universais do produto ficam na raiz.
+- Ficheiros universais do produto (documentação, licença, versão) ficam na raiz.
+- O código-fonte vive em `src/`; os testes locais vivem em `tests/`. A raiz fica limpa mesmo com um único ficheiro de código.
 - Todo o conteúdo específico de IA vive em `.agents/` (entrada: `.agents/AGENTS.md`).
 - Estado operacional vive em `.agents/state/`.
 - Políticas normativas de IA vivem em `.agents/policies/`.
-- O script principal permanece na raiz enquanto a distribuição for por cópia manual.
+- A distribuição continua por cópia manual: copiar `src/Vacation_Mode.js` para o editor do Google Apps Script.

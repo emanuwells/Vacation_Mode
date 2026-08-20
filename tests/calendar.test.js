@@ -137,7 +137,7 @@ function criarContexto() {
   };
 
   vm.createContext(contexto);
-  const script = fs.readFileSync(path.join(__dirname, '..', 'Vacation_Mode.js'), 'utf8');
+  const script = fs.readFileSync(path.join(__dirname, '..', 'src', 'Vacation_Mode.js'), 'utf8');
   vm.runInContext(script, contexto);
 
   return {
@@ -227,3 +227,46 @@ assert.equal(c4.propriedadesScript.has('VACATION_MODE_CALENDAR_QUOTA_RETRY_AT'),
 assert.equal(c4.chamadas.getEvents, 2, 'a execução manual deve mesmo tentar o Calendar');
 assert.equal(c4.chamadas.createAllDayEvent, 1, 'com a quota livre, o evento é finalmente criado');
 console.log('OK: uma sincronização manual limpa o bloqueio de quota e força uma tentativa real.');
+
+// --- Cenário 5: um erro num bloco não deve abortar os restantes (isolamento por bloco). ---
+const c5 = criarContexto();
+const pintadasC = new Set(['7-12', '7-13', '8-2', '8-3']); // Bloco A: Ago 12-13. Bloco B: Set 2-3.
+const sheetC = criarSheet('Calendário 2026', pintadasC, 4);
+c5.setSheets([sheetC]);
+
+const datasC = c5.contexto.obterDatasFerias(sheetC, ANO);
+const blocosC = c5.contexto.agruparDatasConsecutivas(datasC);
+const desejadosC = blocosC.map(b => c5.contexto.construirEventoDesejado(b, 4, 'https://teste'));
+assert.equal(desejadosC.length, 2, 'preparação do cenário: devem existir 2 blocos desejados');
+
+let tentativas = 0;
+const calendarioComFalhaPontual = {
+  createAllDayEvent(titulo, inicio, fim, opts) {
+    tentativas++;
+    if (tentativas === 1) {
+      throw new Error('Falha simulada só no primeiro bloco (ex.: evento antigo inválido).');
+    }
+    return c5.calendario.createAllDayEvent(titulo, inicio, fim, opts);
+  }
+};
+
+const resultadoC = c5.contexto.sincronizarBlocosComDiferenca(calendarioComFalhaPontual, desejadosC, []);
+assert.equal(resultadoC.criados, 1, 'o segundo bloco deve ser criado apesar do erro no primeiro');
+assert.equal(resultadoC.falhados, 1, 'o bloco com erro deve ficar registado como falhado, não abortar tudo');
+assert.equal(tentativas, 2, 'ambos os blocos devem ser tentados');
+console.log('OK: um erro pontual num bloco não aborta os restantes (só esse bloco falha; os outros sincronizam à mesma).');
+
+// Um erro de quota, em contraste, interrompe de imediato — não faz sentido continuar a gastar quota já esgotada.
+tentativas = 0;
+const calendarioComQuotaEsgotada = {
+  createAllDayEvent() {
+    tentativas++;
+    throw new Error('Service invoked too many times for one day: calendar.');
+  }
+};
+assert.throws(
+  () => c5.contexto.sincronizarBlocosComDiferenca(calendarioComQuotaEsgotada, desejadosC, []),
+  /Service invoked too many times/
+);
+assert.equal(tentativas, 1, 'um erro de quota não deve ser tentado novamente para os restantes blocos desta chamada');
+console.log('OK: um erro de quota interrompe de imediato a sincronização por diferença, sem tentar os restantes blocos.');

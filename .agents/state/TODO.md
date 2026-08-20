@@ -1,5 +1,16 @@
 # TODO
 
+## 2026-08-20T12:00:00+01:00 — v1.5.1 Isolamento por bloco + `src/`
+
+**Estado:** concluído (código); pendente confirmação do utilizador na folha real
+**Risco:** médio (regressão numa correção recente)
+**Objetivo:** corrigir "SINCRONIZAR TUDO" a falhar depois de ativar a sincronização automática (1.5.0); mover `Vacation_Mode.js` para `src/`.
+**Alterações:**
+- `src/Vacation_Mode.js` (movido de `Vacation_Mode.js`): `sincronizarBlocosComDiferenca` volta a isolar cada bloco num `try/catch` (regressão de 1.5.0, que tinha perdido a resiliência por bloco do código anterior); `REGEX_QUOTA_CALENDAR` partilhado; erro de quota continua a propagar-se e a interromper de imediato.
+- `tests/`, `README.md`, `PROJECT_CONTEXT.md`, `COMMANDS.md`, `docs/ROOT_STRUCTURE.md`: caminhos atualizados para `src/Vacation_Mode.js`.
+**Validação:** `node --check src/Vacation_Mode.js`; `node tests/triggers.test.js` (5/5); `node tests/calendar.test.js` (7/7); `node .agents/tools/validate-project.mjs` (`ok: true`).
+**Pendente:** colar `src/Vacation_Mode.js` no Apps Script, reativar sincronização automática e confirmar "SINCRONIZAR TUDO" na folha real; se persistir, obter a mensagem exata do log de Execuções.
+
 ## 2026-07-26T23:09:45+01:00 — v1.4.4 WELLS toolkit 0.5.0
 
 **Estado:** concluído
