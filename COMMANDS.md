@@ -10,6 +10,18 @@ node --check Vacation_Mode.js
 
 Valida a sintaxe JavaScript do ficheiro principal. Não executa o Google Apps Script.
 
+## Testes locais
+
+```bash
+node tests/triggers.test.js
+node tests/calendar.test.js
+```
+
+Correm o script real via `vm.runInContext`, com stubs de `CalendarApp`, `ScriptApp`, `PropertiesService`, `LockService` e `SpreadsheetApp` — sem dependências, sem rede, sem executar no Apps Script real.
+
+- `tests/triggers.test.js`: `instalarTriggerAutomatico` instala trigger diário (não a cada 5 min) + `onChange`, e limpa o bloqueio de quota; `removerTriggerAutomatico` remove os três handlers automáticos; pinturas sucessivas agregam-se num único trigger de sincronização do Calendar (debounce).
+- `tests/calendar.test.js`: sincronizar sem alterações não cria nem apaga eventos; alargar um bloco só recria esse bloco; despintar um bloco só apaga esse evento; quota esgotada numa folha bloqueia as restantes na mesma execução e agenda retentativa; execução manual limpa o bloqueio e força uma tentativa real.
+
 ## Runtime WELLS
 
 ```bash

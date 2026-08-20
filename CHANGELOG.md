@@ -1,5 +1,38 @@
 # Changelog
 
+## [1.5.0] - 2026-08-20T00:00:00+01:00
+
+### Sincronização do Calendar por diferença, debounce ao pintar e recuperação de quota
+
+**Motivo:**
+- As datas pintadas deixavam de chegar ao Google Calendar mesmo com a sincronização automática ativa. Causa raiz: cada pintura (trigger `onChange`) e o trigger incondicional de 5 em 5 minutos disparavam uma reconstrução completa do calendário do ano inteiro (apagar todos os eventos gerados pelo script e recriá-los do zero), por cada folha anual. Isto esgotava a quota diária de invocações da Calendar API; ao esgotar, o Google lança `Service invoked too many times for one day: calendar.`, que era só registado no log (execuções automáticas correm em silêncio) — a sincronização parava sem qualquer aviso visível.
+- Solução pedida pelo utilizador: aplicar o mesmo padrão já validado no projeto irmão `Luna_Sheet` (debounce, sincronização por diferença, backoff de quota com retentativa automática), preparado para folhas de anos futuros sem alterações ao código.
+
+**Impacto:**
+- A sincronização com o Calendar deixa de apagar e recriar o ano inteiro a cada execução: cria só os blocos em falta, atualiza só os que mudaram e remove só os que já não correspondem a nenhuma célula pintada.
+- Pintar várias células seguidas já não dispara uma sincronização completa por pintura: os contadores continuam a atualizar de imediato, mas o Calendar sincroniza com um pequeno atraso configurável (`CONFIG.SYNC.EDIT_SYNC_DELAY_MS`, 5 min por omissão), agregando as alterações.
+- O trigger periódico incondicional passa de 5 em 5 minutos para diário (rede de segurança); a frescura normal vem do debounce ao pintar.
+- Se a quota diária do Calendar esgotar, o sistema grava um bloqueio em `PropertiesService` e agenda automaticamente uma retentativa (`CONFIG.SYNC.QUOTA_RETRY_DELAY_MS`, 6 h por omissão); execuções automáticas respeitam o bloqueio em silêncio, execuções manuais (`SINCRONIZAR TUDO`, `Sincronizar com Calendar`) limpam-no e forçam uma tentativa real, com um toast a explicar o motivo em vez do genérico "Erro ao sincronizar".
+- O bloqueio de quota é por script (não por folha/ano), por isso uma folha nova de um ano futuro (ex. "Calendário 2027") herda automaticamente esta proteção sem exigir alterações ao código — `obterFolhasCalendario()` já a deteta pelo nome.
+- Um único evento por bloco pode ficar temporariamente sem "chave" ao migrar de uma sincronização antiga (pré-1.5.0) para esta versão; a primeira sincronização depois de colar o script atualizado pode recriar esses eventos uma única vez (custo esperado de migração, não recorrente).
+
+**Alterações:**
+- `Vacation_Mode.js`: `CONFIG.SYNC` (novo), `PROPRIEDADES`, `HANDLERS`; `onAlteracaoPlanilha` separa contadores (imediatos) de Calendar (debounced); `agendarSincronizacaoCalendar`, `agendarTriggerUnico`, `removerTriggersPorHandler`, `sincronizarCalendarPendente` (novos); `sincronizarComCalendar` reescrito com verificação/gravação de quota e sincronização por diferença; `construirEventoDesejado`, `eventoGeradoPeloScript`, `obterEventosGeradosNoAno`, `sincronizarBlocosComDiferenca` (novos, substituem `limparEventosAntigos`); `instalarTriggerAutomatico` troca o trigger de 5 em 5 minutos por um diário e limpa o bloqueio de quota ao (re)instalar; `removerTriggersAutomaticos` inclui o novo handler `sincronizarCalendarPendente`; `mostrarAjuda()` atualizado.
+- `tests/triggers.test.js`, `tests/calendar.test.js` (novos): cobrem debounce, cadência dos triggers, sincronização por diferença e recuperação de quota, ao estilo já usado em `Luna_Sheet/tests/`.
+- `README.md`, `PROJECT_CONTEXT.md`, `COMMANDS.md`: documentação, tabela de configuração e resolução de problemas atualizadas.
+- `VERSION`: `1.5.0`.
+
+**Validação:**
+- `node --check Vacation_Mode.js`
+- `node tests/triggers.test.js` → 5/5 OK
+- `node tests/calendar.test.js` → 5/5 OK
+- `node .agents/tools/validate-project.mjs` → `ok: true`
+
+**Diff:**
+- Menus, células de configuração (`CONFIG.CELULAS`), cores detetadas e formato dos eventos criados no Calendar mantêm-se inalterados; só a estratégia interna de sincronização e a cadência dos triggers automáticos mudam.
+
+---
+
 ## [1.4.4] - 2026-07-26T23:09:45+01:00
 
 ### Migração para WELLS Agent Runtime 0.5.0

@@ -1,18 +1,20 @@
 /**
  * SISTEMA DE GESTÃO DE FÉRIAS
- * Versão: 1.4.4
- * Data: 2026-07-26
- * 
+ * Versão: 1.5.0
+ * Data: 2026-08-20
+ *
  * Autor: Emanuel Ferreira (@emanuwells)
- * 
+ *
  * Descrição:
  * Sistema completo para gestão de férias com:
  * - Contagem automática de dias de férias (células roxas).
  * - Contagem automática do dia de aniversário (células verdes).
- * - Sincronização com Google Calendar, com agrupamento de dias consecutivos.
- * - Atualização automática via trigger.
+ * - Sincronização com Google Calendar por diferença (cria/atualiza/remove só o que mudou),
+ *   com agrupamento de dias consecutivos, debounce ao pintar e recuperação automática de
+ *   quota esgotada do Calendar (mesmo padrão do projeto irmão Luna Sheet).
+ * - Atualização automática via trigger diário + onChange.
  * - Menu personalizado.
- * 
+ *
  */
 
 // ============================
@@ -54,11 +56,30 @@ const CONFIG = {
     TITULO_EVENTO: 'Férias',       // Título dos eventos criados.
     ANO: new Date().getFullYear(), // Ano por omissão, substituído pelo ano da folha se existir.
     MARCADOR: '[FERIAS_AUTO]'      // Assinatura para identificar eventos gerados pelo script.
+  },
+
+  // Sincronização com o Calendar: debounce ao pintar e recuperação de quota (mesmo padrão do Luna Sheet).
+  SYNC: {
+    EDIT_SYNC_DELAY_MS: 5 * 60 * 1000,        // Atraso do Calendar após pintar/editar (contadores continuam imediatos).
+    QUOTA_RETRY_DELAY_MS: 6 * 60 * 60 * 1000, // Atraso da retentativa automática após esgotar a quota diária do Calendar.
+    MAX_EVENT_MUTATIONS_PER_RUN: 40           // Limite defensivo de criações/atualizações/remoções por execução.
   }
 };
 
 /** Chave usada para ignorar onChange provocado por escrita do próprio script. */
 const CHAVE_SUPRESSAO_ONCHANGE = 'VACATION_MODE_SUPPRESS_ONCHANGE';
+
+/** Chave de PropertiesService (script-wide) para o bloqueio de quota do Calendar. */
+const PROPRIEDADES = {
+  quotaRetryAt: 'VACATION_MODE_CALENDAR_QUOTA_RETRY_AT'
+};
+
+/** Nomes de funções usados pelos triggers, para instalar/remover de forma consistente. */
+const HANDLERS = {
+  sincronizacaoDiaria: 'sincronizarTudo',
+  alteracaoFolha: 'onAlteracaoPlanilha',
+  calendarPendente: 'sincronizarCalendarPendente'
+};
 
 /**
  * Deteta o ano da folha pelo nome (ex.: "Calendário 2025", "Calendario 2026").
@@ -342,6 +363,8 @@ function sincronizarTudo(opcoes) {
 /**
  * Handler de onChange para sincronizar ao colorir ou editar a grelha anual.
  * Ignora alterações feitas pelo próprio script e tipos de mudança irrelevantes.
+ * Os contadores atualizam de imediato (só leem/escrevem a folha); o Calendar é
+ * agendado com debounce, para não gastar a quota diária a cada pintura.
  */
 function onAlteracaoPlanilha(e) {
   if (!e || deveIgnorarOnChange()) {
@@ -353,18 +376,97 @@ function onAlteracaoPlanilha(e) {
     return;
   }
 
-  Logger.log('Alteração detetada (' + e.changeType + '). A sincronizar após colorir/editar...');
-  sincronizarTudo({ automatico: true });
+  Logger.log('Alteração detetada (' + e.changeType + '). A atualizar contadores e a agendar sincronização do Calendar...');
+
+  obterFolhasCalendario().forEach(({ sheet, ano }) => {
+    atualizarContadores(null, sheet, ano, true);
+  });
+
+  agendarSincronizacaoCalendar();
+}
+
+/**
+ * Agenda uma sincronização única do Calendar, adiada, para agregar pinturas sucessivas
+ * num único ciclo em vez de disparar uma sincronização completa a cada alteração.
+ * Se a quota diária estiver bloqueada, não agenda nada (a retentativa já está prevista).
+ */
+function agendarSincronizacaoCalendar() {
+  const retryAt = Number(PropertiesService.getScriptProperties().getProperty(PROPRIEDADES.quotaRetryAt) || 0);
+  if (retryAt > Date.now()) {
+    Logger.log('Sincronização do Calendar adiada devido à quota até ' + new Date(retryAt).toISOString() + '.');
+    return;
+  }
+
+  agendarTriggerUnico(HANDLERS.calendarPendente, CONFIG.SYNC.EDIT_SYNC_DELAY_MS);
+}
+
+/**
+ * Cria um trigger único (baseado em tempo) para o handler indicado, removendo qualquer
+ * trigger pendente do mesmo handler primeiro. Usa lock para evitar duplicados quando
+ * várias alterações disparam o agendamento quase em simultâneo.
+ */
+function agendarTriggerUnico(handler, atrasoMs) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) {
+    Logger.log('Agendamento ignorado: outra execução está a atualizar os triggers.');
+    return false;
+  }
+
+  try {
+    removerTriggersPorHandler(handler);
+    ScriptApp.newTrigger(handler).timeBased().after(atrasoMs).create();
+    return true;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Remove todos os triggers do projeto associados a um handler específico.
+ */
+function removerTriggersPorHandler(handler) {
+  ScriptApp.getProjectTriggers()
+    .filter(trigger => trigger.getHandlerFunction() === handler)
+    .forEach(trigger => ScriptApp.deleteTrigger(trigger));
+}
+
+/**
+ * Executa a sincronização do Calendar pendente (fim do debounce ou retentativa de quota)
+ * para todas as folhas de calendário detetadas.
+ */
+function sincronizarCalendarPendente() {
+  removerTriggersPorHandler(HANDLERS.calendarPendente);
+  PropertiesService.getScriptProperties().deleteProperty(PROPRIEDADES.quotaRetryAt);
+
+  const folhas = obterFolhasCalendario();
+  folhas.forEach(({ sheet, ano }) => {
+    sincronizarComCalendar(sheet, ano, true);
+  });
 }
 
 /**
  * Sincroniza uma folha específica com o Calendar (usa o ano detetado na folha).
+ * Sincronização por diferença: só cria, atualiza ou apaga o que realmente mudou desde
+ * a última execução (em vez de apagar e recriar o ano inteiro). Respeita um bloqueio
+ * local de quota diária do Calendar; execuções manuais limpam esse bloqueio e forçam
+ * uma tentativa real, execuções automáticas saem em silêncio até à retentativa agendada.
  */
 function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
   let lock;
+  const props = PropertiesService.getScriptProperties();
   try {
     const sheet = sheetParam || SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     const ano = anoParam || obterAnoDaSheet(sheet);
+
+    const retryAt = Number(props.getProperty(PROPRIEDADES.quotaRetryAt) || 0);
+    if (retryAt > Date.now()) {
+      if (silencioso) {
+        Logger.log('Sincronização do Calendar suspensa até ' + new Date(retryAt).toISOString() + ' devido à quota diária.');
+        return;
+      }
+      props.deleteProperty(PROPRIEDADES.quotaRetryAt);
+      Logger.log('Execução manual: bloqueio local de quota removido; o Calendar será testado agora.');
+    }
 
     lock = LockService.getDocumentLock();
     if (!lock.tryLock(30000)) {
@@ -388,97 +490,93 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
 
     Logger.log('Calendário obtido: ' + calendario.getName());
 
-    // Obter todas as datas de férias do calendário.
+    // Obter todas as datas de férias e agrupar em blocos (dias úteis seguidos, com fins de semana contíguos).
     const datasFerias = obterDatasFerias(sheet, ano);
     const feriasRestantes = sheet.getRange(CONFIG.CELULAS.FERIAS_RESTANTES).getValue() || 0;
-    if (datasFerias.length === 0) {
-      limparEventosAntigos(calendario, ano);
-      Logger.log('Nenhuma célula de férias encontrada em ' + sheet.getName() + '; eventos antigos removidos.');
-      if (!silencioso) {
-        mostrarNotificacao(sheet.getName() + ': nenhum dia de férias encontrado; eventos antigos removidos.', 'Aviso', 3);
-      }
-      return;
+    const blocos = agruparDatasConsecutivas(datasFerias);
+    const sheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
+
+    Logger.log('Total de dias de férias encontrados (' + sheet.getName() + '): ' + datasFerias.length +
+      ', agrupados em ' + blocos.length + ' período(s).');
+
+    const eventosDesejados = blocos.map(bloco => construirEventoDesejado(bloco, feriasRestantes, sheetUrl));
+    const eventosExistentes = obterEventosGeradosNoAno(calendario, ano);
+
+    const resultado = sincronizarBlocosComDiferenca(calendario, eventosDesejados, eventosExistentes);
+
+    Logger.log('Sincronização concluída (' + sheet.getName() + '): ' + resultado.criados + ' criado(s), ' +
+      resultado.atualizados + ' atualizado(s), ' + resultado.removidos + ' removido(s).');
+
+    if (resultado.pendente) {
+      const agendada = agendarTriggerUnico(HANDLERS.calendarPendente, CONFIG.SYNC.EDIT_SYNC_DELAY_MS);
+      Logger.log('Limite de alterações por execução atingido; continuação ' + (agendada ? 'agendada' : 'não agendada') + '.');
     }
 
-    Logger.log('Total de dias de férias encontrados (' + sheet.getName() + '): ' + datasFerias.length);
-
-    // Limpar eventos antigos, para evitar duplicados, apenas após confirmar que há dados a recriar.
-    limparEventosAntigos(calendario, ano);
-
-    // Agrupar datas consecutivas em blocos.
-    const blocos = agruparDatasConsecutivas(datasFerias);
-
-    Logger.log('Agrupados em ' + blocos.length + ' período(s) de férias');
-
-    // Criar eventos no Calendar para cada bloco.
-    let eventosAdicionados = 0;
-    blocos.forEach((bloco, index) => {
-      try {
-        const intervalo = estenderIntervaloComFinsDeSemanaContiguos(bloco.inicio, bloco.fim);
-        const dataInicio = intervalo.inicio;
-        const dataFimApi = new Date(intervalo.fim);
-        dataFimApi.setDate(dataFimApi.getDate() + 1); // A Calendar API precisa do dia seguinte para eventos de dia inteiro.
-
-        const diasUteis = bloco.dias.length;
-        const titulo = diasUteis === 1
-          ? CONFIG.CALENDARIO.TITULO_EVENTO
-          : CONFIG.CALENDARIO.TITULO_EVENTO + ' (' + diasUteis + ' dias)';
-
-        // Descrição com emojis, resumo e link da folha para referência.
-        const resumoPeriodo = '📅 ' + diasUteis + ' dias úteis · ' + formatarData(dataInicio) + ' a ' + formatarData(intervalo.fim);
-        const resumoRestantes = '📉 Restantes: ' + feriasRestantes + ' dias';
-        const linkSheet = '🔗 Sheet: ' + SpreadsheetApp.getActiveSpreadsheet().getUrl();
-        const descricaoEvento = [
-          resumoPeriodo,
-          resumoRestantes,
-          linkSheet,
-          CONFIG.CALENDARIO.MARCADOR
-        ].join('\n');
-        // Remover qualquer evento existente no mesmo período antes de criar, reforçando a proteção contra duplicados.
-        const duplicados = calendario.getEvents(dataInicio, dataFimApi);
-        duplicados.forEach(evento => {
-          const tituloExistente = evento.getTitle();
-          const descExistente = evento.getDescription() || '';
-          const geradoPeloScript =
-            tituloExistente.startsWith(CONFIG.CALENDARIO.TITULO_EVENTO) ||
-            descExistente.indexOf(CONFIG.CALENDARIO.MARCADOR) !== -1;
-          if (geradoPeloScript) {
-            evento.deleteEvent();
-            Logger.log('Removido duplicado antes de criar novo: ' + tituloExistente);
-          }
-        });
-
-        calendario.createAllDayEvent(titulo, dataInicio, dataFimApi, { description: descricaoEvento });
-        eventosAdicionados++;
-
-        Logger.log('Bloco ' + (index + 1) + ': ' + formatarData(dataInicio) + ' a ' + formatarData(intervalo.fim) +
-          ' (' + diasUteis + ' dia(s) úteis, ' + contarDiasCalendario(dataInicio, intervalo.fim) + ' de calendário)');
-
-      } catch (erroEvento) {
-        Logger.log('Erro ao criar evento: ' + erroEvento.message);
-      }
-    });
-
-    const mensagem = eventosAdicionados === 1
-      ? '1 período de férias adicionado ao Google Calendar!'
-      : eventosAdicionados + ' períodos de férias adicionados ao Google Calendar!';
-
-    Logger.log(eventosAdicionados + ' evento(s) criado(s) com sucesso');
     if (!silencioso) {
-      mostrarNotificacao(mensagem, 'Sincronização completa', 5);
+      if (resultado.criados === 0 && resultado.atualizados === 0 && resultado.removidos === 0) {
+        mostrarNotificacao(sheet.getName() + ': Calendar já estava atualizado (sem alterações).', 'Sincronização completa', 3);
+      } else {
+        const partes = [];
+        if (resultado.criados) partes.push(resultado.criados + ' criado(s)');
+        if (resultado.atualizados) partes.push(resultado.atualizados + ' atualizado(s)');
+        if (resultado.removidos) partes.push(resultado.removidos + ' removido(s)');
+        mostrarNotificacao(sheet.getName() + ': ' + partes.join(', ') + ' no Google Calendar.', 'Sincronização completa', 5);
+      }
     }
 
   } catch (erro) {
-    Logger.log('Erro ao sincronizar com Calendar: ' + erro.message);
-    Logger.log('Stack trace: ' + erro.stack);
-    if (!silencioso) {
-      mostrarNotificacao('Erro ao sincronizar. Verifica o log.', 'Erro', 5);
+    const mensagem = erro && erro.message ? erro.message : String(erro);
+    if (/Service invoked too many times(?: for one day)?:\s*calendar/i.test(mensagem)) {
+      const proxima = new Date(Date.now() + CONFIG.SYNC.QUOTA_RETRY_DELAY_MS);
+      props.setProperty(PROPRIEDADES.quotaRetryAt, String(proxima.getTime()));
+      const agendada = agendarTriggerUnico(HANDLERS.calendarPendente, CONFIG.SYNC.QUOTA_RETRY_DELAY_MS);
+      Logger.log('Quota diária do Google Calendar esgotada. Retentativa ' + (agendada ? 'agendada' : 'não agendada') +
+        ' para ' + proxima.toISOString() + '.');
+      if (!silencioso) {
+        mostrarNotificacao(
+          'Quota diária do Google Calendar esgotada. Nova tentativa automática mais tarde, ou usa "Sincronizar com Calendar" para forçar agora.',
+          'Quota do Calendar',
+          6
+        );
+      }
+    } else {
+      Logger.log('Erro ao sincronizar com Calendar: ' + mensagem);
+      Logger.log('Stack trace: ' + (erro && erro.stack));
+      if (!silencioso) {
+        mostrarNotificacao('Erro ao sincronizar. Verifica o log.', 'Erro', 5);
+      }
     }
   } finally {
     if (lock) {
       lock.releaseLock();
     }
   }
+}
+
+/**
+ * Constrói o evento "desejado" para um bloco de dias de férias: datas (com fins de semana
+ * contíguos incluídos), título e descrição. A chave lógica é a data de início já estendida
+ * (a mesma que fica gravada como início real do evento), o que mantém a correspondência
+ * estável quando o bloco cresce para a frente e só cria um evento novo quando o primeiro
+ * dia do período realmente muda.
+ */
+function construirEventoDesejado(bloco, feriasRestantes, sheetUrl) {
+  const intervalo = estenderIntervaloComFinsDeSemanaContiguos(bloco.inicio, bloco.fim);
+  const dataInicio = intervalo.inicio;
+  const dataFimApi = new Date(intervalo.fim);
+  dataFimApi.setDate(dataFimApi.getDate() + 1); // A Calendar API precisa do dia seguinte para eventos de dia inteiro.
+
+  const diasUteis = bloco.dias.length;
+  const titulo = diasUteis === 1
+    ? CONFIG.CALENDARIO.TITULO_EVENTO
+    : CONFIG.CALENDARIO.TITULO_EVENTO + ' (' + diasUteis + ' dias)';
+
+  const resumoPeriodo = '📅 ' + diasUteis + ' dias úteis · ' + formatarData(dataInicio) + ' a ' + formatarData(intervalo.fim);
+  const resumoRestantes = '📉 Restantes: ' + feriasRestantes + ' dias';
+  const linkSheet = '🔗 Sheet: ' + sheetUrl;
+  const descricao = [resumoPeriodo, resumoRestantes, linkSheet, CONFIG.CALENDARIO.MARCADOR].join('\n');
+
+  return { chave: String(dataInicio.getTime()), inicio: dataInicio, fimApi: dataFimApi, titulo, descricao };
 }
 
 /**
@@ -658,36 +756,99 @@ function obterCalendario() {
 }
 
 /**
- * Remove eventos "Férias" existentes no ano configurado.
- * Remove eventos que começam com "Férias", incluindo "Férias (X dias)".
+ * Indica se um evento do Calendar foi gerado por este script: título "Férias"
+ * (incluindo "Férias (X dias)") ou marcador presente na descrição.
  */
-function limparEventosAntigos(calendario, ano) {
+function eventoGeradoPeloScript(evento) {
+  const titulo = evento.getTitle();
+  const descricao = evento.getDescription() || '';
+  return titulo.startsWith(CONFIG.CALENDARIO.TITULO_EVENTO) || descricao.indexOf(CONFIG.CALENDARIO.MARCADOR) !== -1;
+}
+
+/**
+ * Devolve os eventos gerados pelo script no ano indicado, sem os apagar.
+ * Uma única leitura ao Calendar por sincronização (o mesmo custo de antes);
+ * a decisão do que criar, atualizar ou remover fica a cargo de sincronizarBlocosComDiferenca.
+ */
+function obterEventosGeradosNoAno(calendario, ano) {
   const dataInicio = new Date(ano, 0, 1);  // 1 de janeiro.
   const dataFim = new Date(ano + 1, 0, 1); // 1 de janeiro do ano seguinte; inclui 31 de dezembro.
+  return calendario.getEvents(dataInicio, dataFim).filter(eventoGeradoPeloScript);
+}
 
-  const eventosExistentes = calendario.getEvents(dataInicio, dataFim);
-
-  let removidos = 0;
+/**
+ * Sincroniza os eventos gerados pelo script por diferença: cria só os blocos em falta,
+ * atualiza só os que mudaram (título, descrição ou datas) e apaga só os que já não
+ * correspondem a nenhum bloco pintado. Substitui a estratégia anterior de apagar todos
+ * os eventos do ano e recriá-los do zero a cada sincronização, que gastava a quota diária
+ * do Calendar sem necessidade sempre que nada tinha realmente mudado.
+ * Aplica CONFIG.SYNC.MAX_EVENT_MUTATIONS_PER_RUN como limite defensivo por execução;
+ * devolve `pendente: true` se o limite foi atingido, para o chamador agendar uma continuação.
+ */
+function sincronizarBlocosComDiferenca(calendario, eventosDesejados, eventosExistentes) {
+  const porChave = new Map();
   eventosExistentes.forEach(evento => {
-    const titulo = evento.getTitle();
-    const descricao = evento.getDescription() || '';
-    // Remover eventos criados pelo script: título "Férias" ou marcador na descrição.
-    const geradoPeloScript =
-      titulo.startsWith(CONFIG.CALENDARIO.TITULO_EVENTO) ||
-      descricao.indexOf(CONFIG.CALENDARIO.MARCADOR) !== -1;
-
-    if (geradoPeloScript) {
-      evento.deleteEvent();
-      removidos++;
-      Logger.log('Removido: "' + titulo + '"');
+    const chave = String(evento.getStartTime().getTime());
+    if (!porChave.has(chave)) {
+      porChave.set(chave, evento);
     }
   });
 
-  if (removidos > 0) {
-    Logger.log('Total: ' + removidos + ' evento(s) antigo(s) removido(s) para ' + ano);
-  } else {
-    Logger.log('Nenhum evento antigo encontrado para remover em ' + ano);
-  }
+  let criados = 0;
+  let atualizados = 0;
+  let removidos = 0;
+  let mutacoes = 0;
+  const usados = new Set();
+  const limiteAtingido = () => mutacoes >= CONFIG.SYNC.MAX_EVENT_MUTATIONS_PER_RUN;
+
+  eventosDesejados.forEach(desejado => {
+    if (limiteAtingido()) return;
+    const existente = porChave.get(desejado.chave);
+
+    if (!existente) {
+      calendario.createAllDayEvent(desejado.titulo, desejado.inicio, desejado.fimApi, { description: desejado.descricao });
+      criados++;
+      mutacoes++;
+      return;
+    }
+
+    usados.add(existente);
+
+    // Eventos de dia inteiro não têm um "setter" de intervalo multi-dia no CalendarApp;
+    // quando a duração do bloco muda, o evento é recriado, mas só esse bloco (não o ano inteiro).
+    if (existente.getEndTime().getTime() !== desejado.fimApi.getTime()) {
+      existente.deleteEvent();
+      calendario.createAllDayEvent(desejado.titulo, desejado.inicio, desejado.fimApi, { description: desejado.descricao });
+      atualizados++;
+      mutacoes++;
+      return;
+    }
+
+    let alterado = false;
+    if (existente.getTitle() !== desejado.titulo) {
+      existente.setTitle(desejado.titulo);
+      alterado = true;
+    }
+    if (existente.getDescription() !== desejado.descricao) {
+      existente.setDescription(desejado.descricao);
+      alterado = true;
+    }
+    if (alterado) {
+      atualizados++;
+      mutacoes++;
+    }
+  });
+
+  eventosExistentes.forEach(evento => {
+    if (limiteAtingido()) return;
+    if (!usados.has(evento)) {
+      evento.deleteEvent();
+      removidos++;
+      mutacoes++;
+    }
+  });
+
+  return { criados, atualizados, removidos, pendente: limiteAtingido() };
 }
 
 // GESTÃO DE TRIGGERS (AUTOMAÇÃO)
@@ -719,29 +880,32 @@ function instalarTrigger() {
 
 /**
  * Instala triggers para sincronização automática:
- * - a cada 5 minutos;
- * - quando há alterações de formatação/cor no ficheiro.
- * Atualiza contadores e sincroniza com o Calendar automaticamente.
+ * - diariamente, como rede de segurança;
+ * - quando há alterações de formatação/cor no ficheiro (contadores imediatos,
+ *   Calendar agendado com debounce — ver onAlteracaoPlanilha/agendarSincronizacaoCalendar).
+ * Também limpa qualquer bloqueio de quota do Calendar herdado de uma execução anterior.
  */
 function instalarTriggerAutomatico() {
   try {
     // Remover triggers automáticos existentes.
     removerTriggersAutomaticos();
+    PropertiesService.getScriptProperties().deleteProperty(PROPRIEDADES.quotaRetryAt);
 
-    // Criar trigger que executa a cada 5 minutos.
-    ScriptApp.newTrigger('sincronizarTudo')
+    // Criar trigger diário, como rede de segurança (a frescura normal vem do debounce ao pintar).
+    ScriptApp.newTrigger(HANDLERS.sincronizacaoDiaria)
       .timeBased()
-      .everyMinutes(5)
+      .everyDays(1)
+      .atHour(3)
       .create();
 
-    ScriptApp.newTrigger('onAlteracaoPlanilha')
+    ScriptApp.newTrigger(HANDLERS.alteracaoFolha)
       .forSpreadsheet(SpreadsheetApp.getActiveSpreadsheet())
       .onChange()
       .create();
 
-    Logger.log('Triggers automáticos instalados (5 min + alterações de cor/formato)');
+    Logger.log('Triggers automáticos instalados (diário às 3h + alterações de cor/formato)');
     mostrarNotificacao(
-      'Sincronização automática ativada! Atualiza ao pintar e a cada 5 minutos.',
+      'Sincronização automática ativada! Atualiza ao pintar (com pequeno atraso) e diariamente.',
       'Automação Total Ativa',
       5
     );
@@ -774,7 +938,7 @@ function removerTriggerAutomatico() {
   try {
     removerTriggersAutomaticos();
 
-    Logger.log('✅ Trigger automático (5 min) removido');
+    Logger.log('✅ Triggers automáticos (diário, onChange e Calendar pendente) removidos');
     mostrarNotificacao('Sincronização automática desativada!', 'Automação Total Desativada', 3);
 
   } catch (erro) {
@@ -795,10 +959,14 @@ function removerTriggersExistentes() {
 }
 
 /**
- * Remove todos os triggers automáticos (sincronizarTudo).
+ * Remove todos os triggers automáticos (sincronização diária, onChange e Calendar pendente/debounce).
  */
 function removerTriggersAutomaticos() {
-  const handlers = { sincronizarTudo: true, onAlteracaoPlanilha: true };
+  const handlers = {
+    sincronizarTudo: true,
+    onAlteracaoPlanilha: true,
+    sincronizarCalendarPendente: true
+  };
   const triggers = ScriptApp.getProjectTriggers();
   triggers.forEach(trigger => {
     if (handlers[trigger.getHandlerFunction()]) {
@@ -851,8 +1019,9 @@ function mostrarAjuda() {
     '',
     'SINCRONIZAÇÃO AUTOMÁTICA',
     '- Menu: "Ativar Sincronização Automática"',
-    '- Atualiza ao pintar células e também a cada 5 minutos',
-    '- Pinta as células e o sistema trata da sincronização',
+    '- Contadores atualizam ao pintar; o Calendar sincroniza pouco depois (agrega várias pinturas seguidas)',
+    '- Trigger diário como rede de segurança adicional',
+    '- Pinta as células à vontade e o sistema trata da sincronização',
     '',
     'CONTADORES MANUAIS',
     '- Menu: "Atualizar Contadores": só números',
@@ -862,11 +1031,15 @@ function mostrarAjuda() {
     '- Roxo (#d9d2e9): férias planeadas',
     '- Verde (#d9ead3): dia de aniversário da empresa',
     '',
+    'QUOTA DO GOOGLE CALENDAR',
+    '- Se a quota diária do Calendar esgotar, o sistema pausa sozinho e tenta novamente mais tarde',
+    '- Para forçar uma tentativa imediata, usa "Sincronizar com Calendar" ou "SINCRONIZAR TUDO"',
+    '',
     'RECOMENDAÇÕES',
     'OPÇÃO 1: totalmente automático:',
-    '1. Ativa "Sincronização Automática (5 min)"',
+    '1. Ativa "Sincronização Automática"',
     '2. Pinta células à vontade',
-    '3. Aguarda até 5 minutos',
+    '3. Aguarda alguns minutos',
     '4. Tudo atualiza sozinho',
     '',
     'OPÇÃO 2: semiautomático:',

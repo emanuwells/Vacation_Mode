@@ -2,7 +2,7 @@
 
 ![Stack](https://img.shields.io/badge/stack-Google%20Apps%20Script%20%7C%20Google%20Sheets%20%7C%20Google%20Calendar-4285f4)
 ![Runtime](https://img.shields.io/badge/runtime-Google%20Apps%20Script-34a853)
-![Version](https://img.shields.io/badge/version-1.4.4-f39c12)
+![Version](https://img.shields.io/badge/version-1.5.0-f39c12)
 ![License](https://img.shields.io/badge/license-MIT-2ecc71)
 
 Script Google Apps Script para gerir férias numa folha de cálculo anual e sincronizar períodos com o Google Calendar.
@@ -45,8 +45,10 @@ O fluxo principal:
 | Multi-folha | Suporte a várias folhas anuais no mesmo ficheiro. |
 | Google Calendar | Criação de eventos com título configurável e marcador interno. |
 | Agrupamento | Dias úteis seguidos separados apenas por fins de semana são reunidos num único evento; o título conta dias úteis pintados e o evento inclui fins de semana contíguos. |
-| Sincronização ao colorir | Trigger `onChange` reage a alterações de cor e formato na folha. |
-| Automação | Trigger temporal opcional a cada 5 minutos. |
+| Sincronização ao colorir | Trigger `onChange` reage a alterações de cor e formato na folha; contadores atualizam de imediato e o Calendar sincroniza pouco depois (debounce), agregando várias pinturas seguidas. |
+| Sincronização por diferença | Cria, atualiza ou remove só os eventos que mudaram desde a última sincronização; não apaga nem recria o ano inteiro a cada execução. |
+| Recuperação de quota | Se a quota diária do Calendar esgotar, o script pausa a sincronização automática e tenta novamente mais tarde, sem intervenção manual. |
+| Automação | Trigger diário opcional (rede de segurança), além do debounce ao pintar. |
 | Diagnóstico | Função para validar cores reconhecidas na grelha. |
 
 ## Stack
@@ -89,6 +91,9 @@ A configuração principal está no objeto `CONFIG`, no topo de `Vacation_Mode.j
 | `CALENDARIO.NOME` | vazio | Calendário principal quando vazio. |
 | `CALENDARIO.TITULO_EVENTO` | `Férias` | Título-base dos eventos. |
 | `CALENDARIO.MARCADOR` | `[FERIAS_AUTO]` | Marcador dos eventos gerados pelo script. |
+| `SYNC.EDIT_SYNC_DELAY_MS` | `300000` (5 min) | Atraso do Calendar após pintar/editar; contadores continuam imediatos. |
+| `SYNC.QUOTA_RETRY_DELAY_MS` | `21600000` (6 h) | Atraso da retentativa automática depois de a quota diária do Calendar esgotar. |
+| `SYNC.MAX_EVENT_MUTATIONS_PER_RUN` | `40` | Limite defensivo de criações/atualizações/remoções de eventos por execução. |
 
 As células dos contadores estão em `CONFIG.CELULAS` (por omissão, coluna `C`, linhas `18`–`27`).
 
@@ -103,9 +108,10 @@ As células dos contadores estão em `CONFIG.CELULAS` (por omissão, coluna `C`,
 
 1. Abrir `Gestão de Férias` > `Ativar Sincronização Automática`.
 2. Pintar ou alterar dias na grelha anual.
-3. O script sincroniza contadores e Calendar após alterações de cor (`FORMAT`) ou edição relevante (`EDIT`).
+3. Os contadores atualizam de imediato após alterações de cor (`FORMAT`) ou edição relevante (`EDIT`).
+4. O Calendar sincroniza `CONFIG.SYNC.EDIT_SYNC_DELAY_MS` (5 min por omissão) depois da última alteração; pintar várias vezes seguidas agrega-se numa única sincronização, em vez de uma por pintura.
 
-Também existe um trigger temporal de 5 minutos como rede de segurança.
+Também existe um trigger diário como rede de segurança. Se a quota diária do Google Calendar esgotar, a sincronização automática pausa sozinha e tenta novamente mais tarde (ver [Resolução de problemas](#resolução-de-problemas)); uma execução manual (`SINCRONIZAR TUDO` ou `Sincronizar com Calendar`) limpa esse bloqueio e força uma tentativa imediata.
 
 ## Estrutura da folha
 
@@ -131,11 +137,15 @@ Funções auxiliares no editor do Apps Script: `configurarSheet()`, `atualizarCo
 ```mermaid
 flowchart LR
   A[Google Sheets] --> B[onAlteracaoPlanilha / Menu]
-  B --> C[Atualizar contadores]
-  B --> D[Sincronizar Calendar]
-  C --> E[Ler cores em CONFIG.CALENDAR_RANGE]
-  D --> F[Agrupar datas consecutivas]
-  F --> G[Criar eventos no Google Calendar]
+  B --> C[Atualizar contadores - imediato]
+  B --> D[agendarSincronizacaoCalendar - debounce]
+  D --> E[sincronizarCalendarPendente]
+  C --> F[Ler cores em CONFIG.CALENDAR_RANGE]
+  E --> G[Agrupar datas consecutivas]
+  G --> H[Sincronizar por diferença: criar/atualizar/remover]
+  H --> I[Google Calendar]
+  H -. quota esgotada .-> J[Guardar retentativa em PropertiesService]
+  J -. retentativa agendada .-> E
 ```
 
 ## Validação
@@ -144,6 +154,8 @@ Localmente:
 
 ```bash
 node --check Vacation_Mode.js
+node tests/triggers.test.js
+node tests/calendar.test.js
 ```
 
 No Google Sheets:
@@ -160,6 +172,7 @@ No Google Sheets:
 | Menu ausente | Recarregar a folha e confirmar que o script foi guardado. |
 | Cores não contam | Executar `Testar Deteção de Cores` e ajustar `CONFIG.CORES`. |
 | Colorir não sincroniza | Reativar `Ativar Sincronização Automática` para instalar `onAlteracaoPlanilha`. |
+| Colorir não chega ao Calendar mesmo com sincronização automática ativa | Provável quota diária do Calendar esgotada (erro `Service invoked too many times for one day: calendar` no log de Execuções do Apps Script). O sistema pausa e tenta sozinho mais tarde; para forçar agora, usar `SINCRONIZAR TUDO` ou `Sincronizar com Calendar` (uma execução manual limpa o bloqueio). |
 | Eventos duplicados | Confirmar que `CALENDARIO.MARCADOR` não foi alterado entre execuções. |
 | Ano incorreto | Incluir o ano no nome da folha ou ajustar `CONFIG.CALENDARIO.ANO`. |
 
