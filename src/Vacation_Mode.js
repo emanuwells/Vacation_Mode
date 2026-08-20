@@ -1,6 +1,6 @@
 /**
  * SISTEMA DE GESTÃO DE FÉRIAS
- * Versão: 1.5.2
+ * Versão: 1.5.3
  * Data: 2026-08-20
  *
  * Autor: Emanuel Ferreira (@emanuwells)
@@ -354,15 +354,16 @@ function sincronizarTudo(opcoes) {
       return;
     }
 
-    folhas.forEach(({ sheet, ano }) => {
+    const resultados = folhas.map(({ sheet, ano }) => {
       atualizarContadores(null, sheet, ano, automatico);
       Utilities.sleep(500);
-      sincronizarComCalendar(sheet, ano, automatico);
+      const resultadoCalendar = sincronizarComCalendar(sheet, ano, automatico);
+      return { sheet: sheet.getName(), resultadoCalendar };
     });
 
     Logger.log('Sincronização completa finalizada!');
     if (!automatico) {
-      mostrarNotificacao('Contadores e Calendar sincronizados!', 'Sincronização Completa', 5);
+      mostrarNotificacao(construirMensagemResumoSincronizacao(resultados), 'Sincronização Completa', 6);
     }
 
   } catch (erro) {
@@ -371,6 +372,31 @@ function sincronizarTudo(opcoes) {
       mostrarNotificacao('Erro na sincronização. Verifica o log.', 'Erro', 5);
     }
   }
+}
+
+/**
+ * Constrói a notificação final de "SINCRONIZAR TUDO" a partir do resultado de cada folha.
+ * Nunca mostra "sincronizado" quando alguma folha ficou bloqueada por quota ou teve erro —
+ * é a mensagem enganadora que motivou este ajuste: a sincronização corria até ao fim sem
+ * nenhum erro visível, mas uma folha não tinha criado nenhum evento porque a quota do
+ * Calendar estava esgotada, e o utilizador só via "Contadores e Calendar sincronizados!".
+ */
+function construirMensagemResumoSincronizacao(resultados) {
+  const comQuota = resultados.filter(r => r.resultadoCalendar && r.resultadoCalendar.status === 'quota').map(r => r.sheet);
+  const comErro = resultados.filter(r => r.resultadoCalendar && r.resultadoCalendar.status === 'erro').map(r => r.sheet);
+
+  if (comQuota.length === 0 && comErro.length === 0) {
+    return 'Contadores e Calendar sincronizados!';
+  }
+
+  const partes = ['Contadores atualizados.'];
+  if (comQuota.length > 0) {
+    partes.push('Quota do Calendar esgotada em: ' + comQuota.join(', ') + ' (retentativa automática agendada).');
+  }
+  if (comErro.length > 0) {
+    partes.push('Erro ao sincronizar Calendar em: ' + comErro.join(', ') + ' (verifica o log).');
+  }
+  return partes.join(' ');
 }
 
 /**
@@ -463,6 +489,9 @@ function sincronizarCalendarPendente() {
  * a última execução (em vez de apagar e recriar o ano inteiro). Respeita um bloqueio
  * local de quota diária do Calendar; execuções manuais limpam esse bloqueio e forçam
  * uma tentativa real, execuções automáticas saem em silêncio até à retentativa agendada.
+ * Devolve um estado (`{ status, resultado? }`, com `status` em `'ok'`, `'quota'`, `'erro'`
+ * ou `'ocupado'`) para quem chama (nomeadamente `sincronizarTudo`) poder refletir com
+ * rigor o que aconteceu em cada folha, em vez de assumir sucesso sempre que não há exceção.
  */
 function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
   let lock;
@@ -475,7 +504,7 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
     if (retryAt > Date.now()) {
       if (silencioso) {
         Logger.log('Sincronização do Calendar suspensa até ' + new Date(retryAt).toISOString() + ' devido à quota diária.');
-        return;
+        return { status: 'quota' };
       }
       props.deleteProperty(PROPRIEDADES.quotaRetryAt);
       Logger.log('Execução manual: bloqueio local de quota removido; o Calendar será testado agora.');
@@ -487,7 +516,7 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
       if (!silencioso) {
         mostrarNotificacao('Outra sincronização em curso. Tenta novamente em instantes.', 'Aviso', 4);
       }
-      return;
+      return { status: 'ocupado' };
     }
     Logger.log('A iniciar sincronização com Google Calendar para ' + sheet.getName() + ' (' + ano + ')...');
 
@@ -498,7 +527,7 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
       if (!silencioso) {
         mostrarNotificacao('Erro ao aceder ao calendário. Verifica as permissões.', 'Erro', 5);
       }
-      return;
+      return { status: 'erro' };
     }
 
     Logger.log('Calendário obtido: ' + calendario.getName());
@@ -539,6 +568,8 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
       }
     }
 
+    return { status: 'ok', resultado };
+
   } catch (erro) {
     const mensagem = erro && erro.message ? erro.message : String(erro);
     if (REGEX_QUOTA_CALENDAR.test(mensagem)) {
@@ -554,13 +585,15 @@ function sincronizarComCalendar(sheetParam, anoParam, silencioso) {
           6
         );
       }
-    } else {
-      Logger.log('Erro ao sincronizar com Calendar: ' + mensagem);
-      Logger.log('Stack trace: ' + (erro && erro.stack));
-      if (!silencioso) {
-        mostrarNotificacao('Erro ao sincronizar. Verifica o log.', 'Erro', 5);
-      }
+      return { status: 'quota' };
     }
+
+    Logger.log('Erro ao sincronizar com Calendar: ' + mensagem);
+    Logger.log('Stack trace: ' + (erro && erro.stack));
+    if (!silencioso) {
+      mostrarNotificacao('Erro ao sincronizar. Verifica o log.', 'Erro', 5);
+    }
+    return { status: 'erro' };
   } finally {
     if (lock) {
       lock.releaseLock();

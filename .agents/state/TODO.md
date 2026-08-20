@@ -1,5 +1,16 @@
 # TODO
 
+## 2026-08-20T20:00:00+01:00 — v1.5.3 Resumo final de "SINCRONIZAR TUDO" sem falsos positivos
+
+**Estado:** concluído (código); pendente confirmação do utilizador na folha real
+**Risco:** baixo (melhoria de comunicação, sem alterar a lógica de sincronização)
+**Objetivo:** parar de mostrar "Contadores e Calendar sincronizados!" quando uma folha fica bloqueada por quota — era isso que fazia o utilizador achar que "não deu erro mas nada foi para o Calendar".
+**Alterações:**
+- `src/Vacation_Mode.js`: `sincronizarComCalendar` devolve `{status, resultado?}`; `sincronizarTudo` compõe a notificação final a partir dos resultados reais de cada folha (`construirMensagemResumoSincronizacao`).
+- `tests/calendar.test.js`: novo cenário replicando o log real (uma folha em quota, outra já sincronizada sem alterações).
+**Validação:** `node --check src/Vacation_Mode.js`; `node tests/triggers.test.js` (5/5); `node tests/calendar.test.js` (9/9); `node .agents/tools/validate-project.mjs` (`ok: true`).
+**Pendente:** colar `src/Vacation_Mode.js` no Apps Script e confirmar na folha real que a notificação final identifica corretamente qualquer folha ainda bloqueada por quota.
+
 ## 2026-08-20T18:00:00+01:00 — v1.5.2 Quota do Calendar não detetada em contas PT
 
 **Estado:** concluído (código); pendente confirmação do utilizador na folha real

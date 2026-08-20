@@ -1,15 +1,15 @@
 # HANDOFF
 
-- **Última atualização:** 2026-08-20T18:00:00+01:00
-- **Estado:** concluído — v1.5.2 em `master`, ainda por colar na folha real
+- **Última atualização:** 2026-08-20T20:00:00+01:00
+- **Estado:** concluído — v1.5.3 em `master`, ainda por colar na folha real
 - **Branch:** `master`
-- **Objetivo:** corrigir a deteção de quota do Calendar, que nunca disparava numa conta em português
+- **Objetivo:** garantir que "SINCRONIZAR TUDO" nunca anuncia sucesso quando uma folha fica bloqueada por quota
 
 ## Estado útil
 
-- **Concluído:** causa raiz confirmada pelo log real de Execuções enviado pelo utilizador: `REGEX_QUOTA_CALENDAR` só reconhecia a mensagem de quota em inglês; a conta corre em português (`Serviço invocado demasiadas vezes no mesmo dia: calendar.`), por isso o bloqueio/retentativa (1.5.0/1.5.1) nunca disparava e todos os blocos falhavam individualmente sem explicação. Regex reescrito para depender só do sufixo técnico não traduzido (`: calendar`), válido em qualquer idioma. Teste de regressão com a mensagem exata em português.
+- **Concluído:** analisado o segundo log real enviado pelo utilizador, já com a correção de idioma (1.5.2) a funcionar: "Calendário 2026" ficou corretamente bloqueado pela quota real do Google (mensagem certa, retentativa agendada); "Calendário 2025" sincronizou com 0 alterações porque os eventos já existiam corretamente de uma sincronização anterior — comportamento correto. O problema real era a mensagem final de "SINCRONIZAR TUDO", que dizia sempre "Contadores e Calendar sincronizados!" mesmo quando uma folha ficava bloqueada, escondendo o resultado real. `sincronizarComCalendar` passa a devolver `{status, resultado?}`; `sincronizarTudo` compõe a notificação final a partir dos resultados reais de cada folha.
 - **Em curso:** N/A
-- **Bloqueios/riscos:** a quota diária real da conta Google estava mesmo esgotada no momento do log (confirmado pela mensagem do próprio Google); isto é do lado do Google, não é corrigível por código. A correção garante que, quando a quota resetar, a sincronização (manual ou pela retentativa automática já agendada) finalmente cria os eventos, e que entretanto o utilizador vê a mensagem correta em vez de "N falhado(s)" sem contexto.
-- **Ficheiros relevantes:** `src/Vacation_Mode.js` (`REGEX_QUOTA_CALENDAR`), `tests/calendar.test.js`
-- **Validações executadas:** `node --check src/Vacation_Mode.js`; `node tests/triggers.test.js` (5/5); `node tests/calendar.test.js` (8/8, incluindo o cenário novo em português); `node .agents/tools/validate-project.mjs` (`ok: true`)
-- **Próximo passo exato:** colar `src/Vacation_Mode.js` no Apps Script (substitui tudo), reativar "Ativar Sincronização Automática" e correr "SINCRONIZAR TUDO" ou "Sincronizar com Calendar". Se a quota ainda estiver esgotada nesse momento, a notificação vai dizer isso explicitamente e o sistema tenta sozinho mais tarde — não é preciso repetir manualmente. Se aparecer QUALQUER outra mensagem de erro (não relacionada com quota), reportar o texto exato para diagnóstico dirigido.
+- **Bloqueios/riscos:** a quota diária real da conta Google para "Calendário 2026" continua sujeita ao ciclo de reposição do Google — a retentativa automática (agendada para ~6h depois, e repetida sozinha se ainda estiver esgotada) trata disto sem intervenção manual; não é um bug de código.
+- **Ficheiros relevantes:** `src/Vacation_Mode.js` (`sincronizarComCalendar`, `sincronizarTudo`, `construirMensagemResumoSincronizacao`), `tests/calendar.test.js`
+- **Validações executadas:** `node --check src/Vacation_Mode.js`; `node tests/triggers.test.js` (5/5); `node tests/calendar.test.js` (9/9, incluindo o cenário novo que replica o log real com uma folha em quota e outra já sincronizada); `node .agents/tools/validate-project.mjs` (`ok: true`)
+- **Próximo passo exato:** colar `src/Vacation_Mode.js` no Apps Script e correr "SINCRONIZAR TUDO". Se alguma folha ainda estiver bloqueada por quota, a notificação final vai dizer isso explicitamente por nome da folha, em vez de "sincronizado" — não é preciso mais nada além de aguardar a retentativa automática (ou repetir manualmente mais tarde).

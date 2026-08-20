@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.5.3] - 2026-08-20T20:00:00+01:00
+
+### "SINCRONIZAR TUDO" deixa de anunciar sucesso quando uma folha fica bloqueada por quota
+
+**Motivo:**
+- Depois da correção de idioma (1.5.2), o utilizador enviou um novo log: "Calendário 2026" ficou corretamente bloqueado por quota (mensagem e retentativa agendada, como esperado), mas "Calendário 2025" sincronizou sem erro com "0 criado(s), 0 atualizado(s), 0 removido(s), 0 falhado(s)." — porque os eventos de 2025 já existiam corretamente no Calendar de uma sincronização anterior, e a comparação por diferença não teve nada para mudar. No fim, `sincronizarTudo` mostrava sempre "Contadores e Calendar sincronizados!", independentemente de qualquer folha ter ficado bloqueada — o utilizador via essa mensagem final tranquilizadora e não percebia que "Calendário 2026" continuava sem nenhum evento novo.
+
+**Impacto:**
+- `sincronizarComCalendar` passa a devolver o resultado de cada folha (`'ok'`, `'quota'`, `'erro'` ou `'ocupado'`) em vez de nada.
+- `sincronizarTudo` usa esses resultados para compor a notificação final: só diz "Contadores e Calendar sincronizados!" quando todas as folhas terminam realmente sincronizadas; caso contrário identifica pelo nome quais folhas ficaram bloqueadas por quota (com a retentativa automática já agendada) ou tiveram erro, em vez de uma mensagem genérica de sucesso.
+- Não há alteração ao comportamento por folha (toasts individuais de "Sincronizar com Calendar" continuam iguais); a mudança é só na mensagem final de "SINCRONIZAR TUDO", que agora reflete com rigor o resultado real.
+
+**Alterações:**
+- `src/Vacation_Mode.js`: `sincronizarComCalendar` devolve `{ status, resultado? }` em cada ponto de saída; `sincronizarTudo` recolhe os resultados por folha; nova `construirMensagemResumoSincronizacao`.
+- `tests/calendar.test.js`: novo cenário que replica o log real (uma folha bloqueada por quota, outra já sincronizada sem alterações) e confirma que a notificação final identifica a folha bloqueada, em vez de dizer "sincronizado".
+- `VERSION`: `1.5.3`.
+
+**Validação:**
+- `node --check src/Vacation_Mode.js`
+- `node tests/triggers.test.js` → 5/5 OK
+- `node tests/calendar.test.js` → 9/9 OK (inclui o cenário novo do resumo de "SINCRONIZAR TUDO")
+- `node .agents/tools/validate-project.mjs` → `ok: true`
+
+**Diff:**
+- `sincronizarComCalendar` ganha um contrato de retorno; nenhuma função existente perde comportamento. Sem alterações a menus, células ou formato de eventos.
+
+---
+
 ## [1.5.2] - 2026-08-20T18:00:00+01:00
 
 ### Deteção de quota do Calendar independente do idioma da conta

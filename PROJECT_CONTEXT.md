@@ -8,7 +8,7 @@ Contexto técnico vivo do projeto.
 | --- | --- |
 | Nome | Vacation Mode |
 | Descrição | Gestão de férias em Google Sheets com sincronização para Google Calendar |
-| Versão atual | 1.5.2 |
+| Versão atual | 1.5.3 |
 | Estado | manutenção |
 | Sistema IA | WELLS Agent Runtime 0.5.0 (`.agents/`) |
 

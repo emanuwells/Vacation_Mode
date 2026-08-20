@@ -106,9 +106,10 @@ function criarContexto() {
     deleteProperty(chave) { propriedadesDoc.delete(chave); return documentProperties; }
   };
 
+  const toasts = [];
   const spreadsheet = {
     getUrl: () => 'https://docs.google.com/spreadsheets/d/teste',
-    toast() {},
+    toast(mensagem, titulo, duracao) { toasts.push({ mensagem, titulo, duracao }); },
     getSheets: () => spreadsheet._sheets || [],
     getActiveSheet: () => (spreadsheet._sheets || [])[0]
   };
@@ -147,6 +148,7 @@ function criarContexto() {
     eventos,
     eventosAtivos: () => eventos.filter(e => !e.apagado),
     propriedadesScript,
+    toasts,
     triggersCriados,
     setSheets: sheets => { spreadsheet._sheets = sheets; },
     setLancarErroQuota: valor => { lancarErroQuota = valor; },
@@ -287,3 +289,42 @@ assert.throws(
 );
 assert.equal(tentativas, 1, 'a mensagem de quota em português também deve interromper de imediato, sem tentar os restantes blocos');
 console.log('OK: a mensagem de quota em português (log real do utilizador) também é reconhecida e interrompe de imediato.');
+
+// --- Cenário 6: SINCRONIZAR TUDO com uma folha bloqueada por quota e outra já sincronizada
+// (sem nada para mudar) tem de avisar claramente da quota — nunca mostrar "sincronizado"
+// quando uma folha na realidade não criou nenhum evento. Replica o log real do utilizador:
+// Calendário 2026 esgota a quota a criar o primeiro evento; Calendário 2025 já está em dia
+// (0 criados/atualizados/removidos, sem erro) e por isso nunca chega a tentar criar nada.
+const c6 = criarContexto();
+const sheet2026Quota = criarSheet('Calendário 2026', new Set(['7-12', '7-13']), 7); // Ago 12-13, sem evento existente.
+const sheet2025SemAlteracoes = criarSheet('Calendário 2025', new Set(['0-2', '0-3']), 4); // Jan 2-3.
+c6.setSheets([sheet2026Quota, sheet2025SemAlteracoes]);
+
+// Pré-semear em "Calendário 2025" o evento exatamente como o script o construiria, para que
+// a sincronização por diferença não precise de criar/atualizar nada nessa folha.
+const blocoExistente = c6.contexto.agruparDatasConsecutivas(c6.contexto.obterDatasFerias(sheet2025SemAlteracoes, 2025))[0];
+const eventoDesejadoExistente = c6.contexto.construirEventoDesejado(blocoExistente, 4, 'https://docs.google.com/spreadsheets/d/teste');
+c6.calendario.createAllDayEvent(eventoDesejadoExistente.titulo, eventoDesejadoExistente.inicio, eventoDesejadoExistente.fimApi, {
+  description: eventoDesejadoExistente.descricao
+});
+c6.chamadas.createAllDayEvent = 0; // não conta para as asserções seguintes; é só preparação do cenário.
+
+// A quota só falha a criar eventos (como no log real); a leitura de eventos existentes funciona.
+const calendarioComQuotaSoAoCriar = {
+  getName: () => c6.calendario.getName(),
+  getEvents: c6.calendario.getEvents,
+  createAllDayEvent() {
+    throw new Error('Serviço invocado demasiadas vezes no mesmo dia: calendar.');
+  }
+};
+c6.contexto.CalendarApp.getDefaultCalendar = () => calendarioComQuotaSoAoCriar;
+
+c6.contexto.sincronizarTudo({}); // execução manual (sem "automatico:true"), tal como o menu "SINCRONIZAR TUDO".
+
+const ultimoToast = c6.toasts[c6.toasts.length - 1];
+assert.ok(ultimoToast, 'sincronizarTudo deve mostrar uma notificação final numa execução manual');
+assert.notEqual(ultimoToast.mensagem, 'Contadores e Calendar sincronizados!',
+  'não pode mostrar sucesso quando uma folha ficou bloqueada por quota e não criou nenhum evento');
+assert.ok(ultimoToast.mensagem.includes('Quota do Calendar esgotada em: Calendário 2026'),
+  'a notificação final tem de identificar qual folha ficou bloqueada pela quota: ' + ultimoToast.mensagem);
+console.log('OK: SINCRONIZAR TUDO avisa claramente quando uma folha fica bloqueada por quota, em vez de dizer "sincronizado".');

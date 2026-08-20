@@ -2,6 +2,23 @@
 
 Registo factual das validações relevantes.
 
+## 2026-08-20 — Resumo final de "SINCRONIZAR TUDO" sem falsos positivos / v1.5.3
+
+- **Alteração:** `sincronizarComCalendar` devolve `{status, resultado?}`; `sincronizarTudo` compõe a notificação final a partir dos resultados reais de cada folha
+- **Evidência de origem:** segundo log real de Execuções enviado pelo utilizador, já com a correção de idioma (1.5.2) a funcionar corretamente: "Calendário 2026" bloqueado pela quota real do Google (comportamento correto); "Calendário 2025" sincronizado com 0 alterações (eventos já existentes, comportamento correto); mas a notificação final de "SINCRONIZAR TUDO" continuava a dizer "Contadores e Calendar sincronizados!", escondendo que "Calendário 2026" não tinha nenhum evento novo
+- **Comando/validação:** `node --check src/Vacation_Mode.js`
+- **Resultado real:** exit code 0
+
+- **Comando/validação:** `node tests/triggers.test.js`
+- **Resultado real:** 5/5 `OK`
+
+- **Comando/validação:** `node tests/calendar.test.js`
+- **Resultado real:** 9/9 `OK` (inclui o cenário novo que replica o log real: uma folha em quota, outra já sincronizada, e confirma que a notificação final identifica a folha bloqueada)
+
+- **Comando/validação:** `node .agents/tools/validate-project.mjs`
+- **Resultado real:** `{"ok":true,...}`
+- **Limitações:** confirma a composição da mensagem localmente; não confirma a experiência real no Google Sheets (o toast a aparecer corretamente na folha do utilizador).
+
 ## 2026-08-20 — Quota do Calendar não detetada em conta PT / v1.5.2
 
 - **Alteração:** `REGEX_QUOTA_CALENDAR` deixa de depender da mensagem em inglês; passa a reconhecer o sufixo `: calendar` em qualquer idioma

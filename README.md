@@ -2,7 +2,7 @@
 
 ![Stack](https://img.shields.io/badge/stack-Google%20Apps%20Script%20%7C%20Google%20Sheets%20%7C%20Google%20Calendar-4285f4)
 ![Runtime](https://img.shields.io/badge/runtime-Google%20Apps%20Script-34a853)
-![Version](https://img.shields.io/badge/version-1.5.2-f39c12)
+![Version](https://img.shields.io/badge/version-1.5.3-f39c12)
 ![License](https://img.shields.io/badge/license-MIT-2ecc71)
 
 Script Google Apps Script para gerir férias numa folha de cálculo anual e sincronizar períodos com o Google Calendar.
