@@ -1,6 +1,6 @@
 /**
  * SISTEMA DE GESTÃO DE FÉRIAS
- * Versão: 1.5.1
+ * Versão: 1.5.2
  * Data: 2026-08-20
  *
  * Autor: Emanuel Ferreira (@emanuwells)
@@ -83,8 +83,16 @@ const HANDLERS = {
   calendarPendente: 'sincronizarCalendarPendente'
 };
 
-/** Mensagem exata que o Google devolve quando a quota diária do Calendar esgota. */
-const REGEX_QUOTA_CALENDAR = /Service invoked too many times(?: for one day)?:\s*calendar/i;
+/**
+ * Deteta o erro de quota/limite do serviço Calendar, independentemente do idioma da conta.
+ * O Google traduz a frase à volta ("Service invoked too many times..." / "Serviço invocado
+ * demasiadas vezes...") mas mantém sempre o identificador interno do serviço em inglês,
+ * no formato ": calendar". Confirmado com o log real do utilizador em português:
+ * "Serviço invocado demasiadas vezes no mesmo dia: calendar." — a expressão anterior só
+ * reconhecia a mensagem em inglês, por isso nunca acionava o bloqueio/retentativa numa
+ * conta em português; cada bloco falhava individualmente sem o sistema perceber que era quota.
+ */
+const REGEX_QUOTA_CALENDAR = /:\s*calendar\b/i;
 
 /**
  * Deteta o ano da folha pelo nome (ex.: "Calendário 2025", "Calendario 2026").

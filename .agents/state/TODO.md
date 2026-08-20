@@ -1,5 +1,16 @@
 # TODO
 
+## 2026-08-20T18:00:00+01:00 — v1.5.2 Quota do Calendar não detetada em contas PT
+
+**Estado:** concluído (código); pendente confirmação do utilizador na folha real
+**Risco:** baixo (correção pontual, evidenciada por log real)
+**Objetivo:** corrigir a deteção de quota do Calendar, que nunca disparava porque a mensagem de erro do Google estava em português na conta do utilizador.
+**Alterações:**
+- `src/Vacation_Mode.js`: `REGEX_QUOTA_CALENDAR` deixa de depender do texto em inglês; passa a reconhecer o sufixo `: calendar` (não traduzido) em qualquer idioma. Confirmado com a mensagem exata do log: "Serviço invocado demasiadas vezes no mesmo dia: calendar."
+- `tests/calendar.test.js`: novo cenário de regressão com essa mensagem em português.
+**Validação:** `node --check src/Vacation_Mode.js`; `node tests/triggers.test.js` (5/5); `node tests/calendar.test.js` (8/8); `node .agents/tools/validate-project.mjs` (`ok: true`).
+**Pendente:** colar `src/Vacation_Mode.js` no Apps Script e confirmar que "SINCRONIZAR TUDO" cria eventos (ou mostra a notificação correta de quota) na folha real; a quota diária real da conta Google tem de ter resetado do lado do Google para os eventos aparecerem de imediato.
+
 ## 2026-08-20T12:00:00+01:00 — v1.5.1 Isolamento por bloco + `src/`
 
 **Estado:** concluído (código); pendente confirmação do utilizador na folha real

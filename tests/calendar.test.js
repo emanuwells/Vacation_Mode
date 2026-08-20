@@ -270,3 +270,20 @@ assert.throws(
 );
 assert.equal(tentativas, 1, 'um erro de quota não deve ser tentado novamente para os restantes blocos desta chamada');
 console.log('OK: um erro de quota interrompe de imediato a sincronização por diferença, sem tentar os restantes blocos.');
+
+// Regressão: a mesma mensagem de quota, mas na tradução em português vista no log real do
+// utilizador, tem de ser reconhecida da mesma forma (o identificador do serviço "calendar"
+// não é traduzido pelo Google; só a frase à volta muda consoante o idioma da conta).
+tentativas = 0;
+const calendarioComQuotaEmPortugues = {
+  createAllDayEvent() {
+    tentativas++;
+    throw new Error('Serviço invocado demasiadas vezes no mesmo dia: calendar.');
+  }
+};
+assert.throws(
+  () => c5.contexto.sincronizarBlocosComDiferenca(calendarioComQuotaEmPortugues, desejadosC, []),
+  /demasiadas vezes/
+);
+assert.equal(tentativas, 1, 'a mensagem de quota em português também deve interromper de imediato, sem tentar os restantes blocos');
+console.log('OK: a mensagem de quota em português (log real do utilizador) também é reconhecida e interrompe de imediato.');

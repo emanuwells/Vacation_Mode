@@ -2,6 +2,23 @@
 
 Registo factual das validações relevantes.
 
+## 2026-08-20 — Quota do Calendar não detetada em conta PT / v1.5.2
+
+- **Alteração:** `REGEX_QUOTA_CALENDAR` deixa de depender da mensagem em inglês; passa a reconhecer o sufixo `: calendar` em qualquer idioma
+- **Evidência de origem:** log real de Execuções do Apps Script enviado pelo utilizador (screenshot), mostrando 7 blocos a falhar com "Serviço invocado demasiadas vezes no mesmo dia: calendar." e "Sincronização concluída (Calendário 2026): 0 criado(s), 0 atualizado(s), 0 removido(s), 7 falhado(s)."
+- **Comando/validação:** `node --check src/Vacation_Mode.js`
+- **Resultado real:** exit code 0
+
+- **Comando/validação:** `node tests/triggers.test.js`
+- **Resultado real:** 5/5 `OK`
+
+- **Comando/validação:** `node tests/calendar.test.js`
+- **Resultado real:** 8/8 `OK` (inclui o cenário novo com a mensagem de quota em português, replicando o log real)
+
+- **Comando/validação:** `node .agents/tools/validate-project.mjs`
+- **Resultado real:** `{"ok":true,...}`
+- **Limitações:** confirma a deteção do erro localmente (Node, com o texto exato do log); não confirma ainda que a folha real cria os eventos, porque isso depende também de a quota diária real da conta Google já ter resetado — fora do controlo do código.
+
 ## 2026-08-20 — Isolamento por bloco + mover para `src/` / v1.5.1
 
 - **Alteração:** `sincronizarBlocosComDiferenca` volta a isolar cada bloco num `try/catch` (regressão de 1.5.0); `Vacation_Mode.js` movido para `src/Vacation_Mode.js`

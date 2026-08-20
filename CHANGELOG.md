@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.5.2] - 2026-08-20T18:00:00+01:00
+
+### Deteção de quota do Calendar independente do idioma da conta
+
+**Motivo:**
+- O utilizador enviou o log real de execução do Apps Script: a sincronização corria até ao fim ("Sincronização concluída (Calendário 2026): 0 criado(s), 0 atualizado(s), 0 removido(s), 7 falhado(s).") sem criar nenhum evento. Causa raiz confirmada pelo log: `REGEX_QUOTA_CALENDAR` só reconhecia a mensagem de quota em inglês (`Service invoked too many times for one day: calendar`), mas a conta/projeto Apps Script deste utilizador corre em português, e o Google devolve `Serviço invocado demasiadas vezes no mesmo dia: calendar.` — mensagem nunca reconhecida como quota. Cada um dos 7 blocos falhava individualmente, sem o bloqueio/retentativa automática (construídos em 1.5.0/1.5.1) alguma vez disparar, e sem o utilizador ver a notificação explicativa.
+
+**Impacto:**
+- A quota do Calendar volta a ser reconhecida corretamente, independentemente do idioma da conta Google: o Google não traduz o identificador interno do serviço (`calendar`), só a frase à volta — a nova expressão (`/:\s*calendar\b/i`) usa esse sufixo estável em vez de depender do texto em inglês.
+- Quando a quota diária esgota, a sincronização volta a parar no primeiro bloco (em vez de tentar e falhar nos 7), grava o bloqueio, agenda a retentativa automática e mostra a notificação "Quota diária do Google Calendar esgotada..." em execuções manuais, em vez de um "7 falhado(s)" sem contexto.
+- A quota diária real da conta Google continua sujeita ao ciclo de reposição do Google — esta correção garante que, assim que resetar, a próxima sincronização (manual ou automática) cria os eventos normalmente, sem intervenção adicional.
+
+**Alterações:**
+- `src/Vacation_Mode.js`: `REGEX_QUOTA_CALENDAR` reescrito para não depender do idioma.
+- `tests/calendar.test.js`: novo cenário de regressão com a mensagem de erro em português tal como reportada pelo utilizador.
+- `VERSION`: `1.5.2`.
+
+**Validação:**
+- `node --check src/Vacation_Mode.js`
+- `node tests/triggers.test.js` → 5/5 OK
+- `node tests/calendar.test.js` → 8/8 OK (inclui o novo cenário em português)
+- `node .agents/tools/validate-project.mjs` → `ok: true`
+
+**Diff:**
+- Alteração de uma linha (expressão regular) mais o teste de regressão correspondente; nenhuma outra lógica, menu, célula ou formato de evento foi alterado.
+
+---
+
 ## [1.5.1] - 2026-08-20T12:00:00+01:00
 
 ### Isolamento de erros por bloco na sincronização do Calendar; script movido para `src/`
